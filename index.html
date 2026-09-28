@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Traktamenteskollen</title>
+<meta name="description" content="Verifiera traktamente enligt Byggavtalet eller Skatteverket – skattefri och skattepliktig del, förrättningstillägg, hemmahelg och långa förrättningar.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#eef1f3; --surface:#ffffff; --surface-2:#f6f8f9; --ink:#15212b; --muted:#5b6873; --line:#d5dce1;
+  --accent:#1c4f7a; --accent-ink:#ffffff; --accent-soft:#e3edf5;
+  --free:#1f7a52; --free-soft:#e2f2ea; --tax:#b5610b; --tax-soft:#fbeedd; --benefit:#6b4fa0; --benefit-soft:#eee8f7;
+  --warn:#9a5b00; --warn-soft:#fff4dc; --err:#b3261e; --err-soft:#fde7e5;
+  --radius:10px;
+  --f-display:"Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0f161c; --surface:#17212a; --surface-2:#1c2833; --ink:#e6ecf0; --muted:#93a1ac; --line:#2a3742;
+    --accent:#6aa6d8; --accent-ink:#0b1620; --accent-soft:#1d3346;
+    --free:#4cc38a; --free-soft:#163327; --tax:#f0a24a; --tax-soft:#3a2915; --benefit:#b39ae0; --benefit-soft:#2a2340;
+    --warn:#f0b34a; --warn-soft:#352a12; --err:#ff8a80; --err-soft:#3b1a18;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0f161c; --surface:#17212a; --surface-2:#1c2833; --ink:#e6ecf0; --muted:#93a1ac; --line:#2a3742;
+  --accent:#6aa6d8; --accent-ink:#0b1620; --accent-soft:#1d3346;
+  --free:#4cc38a; --free-soft:#163327; --tax:#f0a24a; --tax-soft:#3a2915; --benefit:#b39ae0; --benefit-soft:#2a2340;
+  --warn:#f0b34a; --warn-soft:#352a12; --err:#ff8a80; --err-soft:#3b1a18;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);margin:0}
+.wrap{max-width:1200px;margin:0 auto;padding-inline:20px;padding-block:28px 96px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:30px;font-weight:800}
+h2{font-size:17px;font-weight:700}
+h3{font-size:14px;font-weight:700}
+.num,.money{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;margin-bottom:22px}
+header.top p{margin:4px 0 0;color:var(--muted);max-width:60ch}
+.yearbadge{font-family:var(--f-mono);font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:var(--surface)}
+
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{font:600 14px var(--f-body);border:0;background:transparent;color:var(--muted);padding:8px 16px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.seg button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.seg.small button{padding:6px 12px;font-size:13px}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;align-items:start}
+@media (max-width:920px){.layout{grid-template-columns:minmax(0,1fr)}}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+.step{padding:18px 20px;display:grid;gap:14px}
+.step + .step{border-top:1px solid var(--line)}
+.step-head{display:flex;align-items:baseline;gap:10px}
+.step-no{font-family:var(--f-mono);font-size:12px;color:var(--accent);font-weight:600}
+.hint{color:var(--muted);font-size:13px;margin:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px 16px}
+.field{display:grid;gap:5px}
+.field > span{font-size:13px;font-weight:500;color:var(--muted)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row > input[type=date]{flex:1 1 150px}
+.row > input[type=time]{flex:0 1 110px}
+input[type=date],input[type=time],input[type=number],select{font:15px var(--f-body);color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0;width:100%}
+.row > input{width:auto}
+.check{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.check input{margin-top:3px;accent-color:var(--accent);width:16px;height:16px;flex:none}
+.check b{font-weight:600}
+.check small{display:block;color:var(--muted);font-size:13px}
+.choice{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.choice label{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer;background:var(--surface-2)}
+.choice label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.choice input{margin-top:3px;accent-color:var(--accent)}
+.choice small{display:block;color:var(--muted);font-size:13px}
+.sub{display:grid;gap:10px;padding:12px 14px;border-radius:8px;background:var(--surface-2);border:1px dashed var(--line)}
+
+/* Summary */
+.summary{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);display:grid;gap:14px}
+@media (max-width:920px){.summary{position:static}}
+.sum-card{padding:18px 20px;display:grid;gap:14px}
+.total{display:grid;gap:2px}
+.total .lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.total .big{font-family:var(--f-mono);font-size:32px;font-weight:600;letter-spacing:-.02em}
+.bar{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--line)}
+.bar i{display:block;height:100%}
+.bar .b-free{background:var(--free)} .bar .b-tax{background:var(--tax)}
+.kv{display:grid;gap:8px}
+.kv .item{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:10px 12px;border-radius:8px}
+.kv .item .dot{width:10px;height:10px;border-radius:3px}
+.kv .item .t{font-weight:600}
+.kv .item .t small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.kv .item .v{font-family:var(--f-mono);font-weight:600;font-size:17px}
+.it-free{background:var(--free-soft)} .it-free .dot{background:var(--free)} .it-free .v{color:var(--free)}
+.it-tax{background:var(--tax-soft)} .it-tax .dot{background:var(--tax)} .it-tax .v{color:var(--tax)}
+.it-ben{background:var(--benefit-soft)} .it-ben .dot{background:var(--benefit)} .it-ben .v{color:var(--benefit)}
+.msgs{display:grid;gap:8px}
+.msg{font-size:13px;padding:9px 12px;border-radius:8px;background:var(--warn-soft);color:var(--ink);border-left:3px solid var(--warn)}
+.msg.err{background:var(--err-soft);border-left-color:var(--err)}
+.msg.info{background:var(--accent-soft);border-left-color:var(--accent)}
+.milestones{display:grid;gap:6px;font-size:13px}
+.milestones div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dotted var(--line);padding-bottom:5px}
+.milestones div:last-child{border-bottom:0}
+.milestones .past{color:var(--muted)}
+
+/* Tables */
+.section{margin-top:24px}
+.section > .panel{padding:18px 20px;display:grid;gap:12px}
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:middle}
+th{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;background:var(--surface)}
+td.r,th.r{text-align:right}
+td.money{text-align:right}
+tfoot td{font-weight:600;border-bottom:0;border-top:2px solid var(--ink)}
+.c-free{color:var(--free)} .c-tax{color:var(--tax)} .c-ben{color:var(--benefit)} .c-mute{color:var(--muted)}
+.days thead th{position:sticky;top:0;z-index:1}
+.days tr.wknd td:first-child{color:var(--muted)}
+.days tr.home td{background:var(--surface-2)}
+.days tr.monthsep td{border-top:2px solid var(--line)}
+.days select{padding:5px 8px;font-size:13px;width:auto}
+.chip{display:inline-block;font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);margin-right:3px}
+.chip.p2{background:var(--tax-soft);border-color:transparent;color:var(--tax)}
+.chip.p3{background:var(--err-soft);border-color:transparent;color:var(--err)}
+.why{white-space:normal;min-width:220px;max-width:300px;font-size:12px;line-height:1.35;color:var(--tax);margin-top:4px}
+.meal{display:inline-flex;gap:3px}
+.meal label{display:inline-grid;place-items:center;width:26px;height:26px;border:1px solid var(--line);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);user-select:none}
+.meal input{position:absolute;opacity:0;pointer-events:none}
+.meal label:has(input:checked){background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.meal label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:1px}
+details > summary{cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:17px;list-style:none;display:flex;align-items:center;gap:8px}
+details > summary::-webkit-details-marker{display:none}
+details > summary::before{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s}
+details[open] > summary::before{transform:rotate(45deg)}
+.btn{font:600 13px var(--f-body);border:1px solid var(--line);background:var(--surface-2);color:var(--ink);padding:7px 12px;border-radius:8px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.rules div{display:grid;gap:6px}
+.rules ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:14px}
+.rules p{margin:0;font-size:14px}
+.src{font-size:12px;color:var(--muted)}
+.src a{color:var(--accent)}
+
+/* Mobile sticky totals */
+.mbar{display:none}
+@media (max-width:920px){
+  .mbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:5;gap:8px;justify-content:space-between;background:var(--surface);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom, 0px))}
+  .mbar div{display:grid;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+  .mbar b{font-family:var(--f-mono);font-size:15px;letter-spacing:0;text-transform:none}
+}
+@media (max-width:480px){
+  .wrap{padding-inline:16px}
+  h1{font-size:25px}
+  .step,.sum-card,.section > .panel{padding:16px}
+  .total .big{font-size:27px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Traktamenteskollen</h1>
+      <p>Räkna fram och kontrollera traktamente. Du ser direkt vad som är skattefritt och vad som blir skattepliktig lön.</p>
+    </div>
+    <div class="seg" role="group" aria-label="Regelverk">
+      <button type="button" id="rv-bygg" data-regel="bygg" aria-pressed="true">Byggavtalet</button>
+      <button type="button" id="rv-skv" data-regel="skv" aria-pressed="false">Skatteverket</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- INPUTS -->
+    <form class="panel" id="form" autocomplete="off">
+      <section class="step">
+        <div class="step-head"><span class="step-no">1</span><h2>Period</h2></div>
+        <div class="seg small" role="group" aria-label="Omfattning">
+          <button type="button" id="om-hela" data-omfang="hela" aria-pressed="true">Hela resan</button>
+          <button type="button" id="om-del" data-omfang="del" aria-pressed="false">Del av pågående förrättning</button>
+        </div>
+
+        <div id="p-hela" class="grid2">
+          <label class="field"><span>Avresa hemifrån</span>
+            <div class="row"><input type="date" id="avresa" required><input type="time" id="avresaTid" step="300" required></div>
+          </label>
+          <label class="field"><span>Hemkomst</span>
+            <div class="row"><input type="date" id="hemkomst" required><input type="time" id="hemTid" step="300" required></div>
+          </label>
+        </div>
+
+        <div id="p-del" class="grid2" hidden>
+          <label class="field"><span>Förrättningen påbörjades</span>
+            <input type="date" id="forrStart">
+          </label>
+          <div></div>
+          <label class="field"><span>Periodens första dag</span><input type="date" id="periodFran"></label>
+          <label class="field"><span>Periodens sista dag</span><input type="date" id="periodTill"></label>
+          <label class="check" style="grid-column:1/-1"><input type="checkbox" id="slutarHemresa">
+            <span><b>Förrättningen avslutas periodens sista dag</b><small>Sista dagen räknas då som hemresedag.</small></span>
+          </label>
+          <label class="field" id="f-slutTid" hidden><span>Hemkomst klockan</span><input type="time" id="slutTid" step="300"></label>
+        </div>
+        <p class="hint" id="hint-period"></p>
+      </section>
+
+      <section class="step">
+        <div class="step-head"><span class="step-no">2</span><h2>Boende</h2></div>
+        <div class="choice">
+          <label><input type="radio" name="logi" id="logi-egen" value="egen" checked>
+            <span><b>Jag ordnar logi själv</b><small>Nattraktamente räknas in i det skattefria.</small></span></label>
+          <label><input type="radio" name="logi" id="logi-ag" value="ag">
+            <span><b>Arbetsgivaren står för logi</b><small id="logi-ag-desc">Bygg: traktamentet minskas med 35 %.</small></span></label>
+        </div>
+        <label class="check bygg-only" id="f-tillagg"><input type="checkbox" id="tillaggRatt" checked>
+          <span><b>Rätt till förrättningstillägg</b><small>Gäller när du ordnar logi själv efter samråd (eller om arbetsgivaren inte samrått). 35 % av traktamentet per arbetsdag dag 1–90, sedan 20 %. Skattepliktigt.</small></span>
+        </label>
+      </section>
+
+      <section class="step">
+        <div class="step-head"><span class="step-no">3</span><h2>Helger och lediga dagar</h2></div>
+        <div class="choice">
+          <label><input type="radio" name="helg" id="helg-hemma" value="hemma" checked>
+            <span><b>Hemmahelg</b><small>Jag reser hem över helgerna.</small></span></label>
+          <label><input type="radio" name="helg" id="helg-kvar" value="kvar">
+            <span><b>Stannar på orten</b><small>Helgerna tillbringas på förrättningsorten.</small></span></label>
+        </div>
+        <div class="sub" id="f-hemresa">
+          <label class="check"><input type="checkbox" id="fredagFore19" checked>
+            <span><b>Hemresan inför helgen är hemma före kl. 19</b><small>Ger halvdag i skattefritt dagtraktamente den dagen.</small></span></label>
+          <label class="check"><input type="checkbox" id="mandagFore12" checked>
+            <span><b>Återresan efter helgen startar före kl. 12</b><small>Ger heldag i skattefritt dagtraktamente den dagen.</small></span></label>
+        </div>
+        <p class="hint bygg-only">Byggavtalet §6 2.8: för mellanliggande lediga dagar betalas ett traktamente per dag, högst två per sammanhängande ledighet. Skattefritt bara om du stannar på orten. Markera helgdagar och semester i dag-för-dag-listan.</p>
+        <p class="hint skv-only">Dagar hemma räknas inte som tjänsteresa. Lediga dagar på orten ger traktamente som vanligt.</p>
+      </section>
+
+      <section class="step">
+        <div class="step-head"><span class="step-no">4</span><h2>Måltider</h2></div>
+        <label class="check bygg-only"><input type="checkbox" id="friKost">
+          <span><b>Fri kost enligt överenskommelse</b><small>Byggavtalet §6 2.4: traktamentet minskas med 55 %. Alla måltider räknas som fria.</small></span></label>
+        <div class="field">
+          <span>Måltider som arbetsgivaren betalar, alla dagar på orten</span>
+          <div class="row">
+            <label class="check"><input type="checkbox" id="mF"><span>Frukost</span></label>
+            <label class="check"><input type="checkbox" id="mL"><span>Lunch</span></label>
+            <label class="check"><input type="checkbox" id="mM"><span>Middag</span></label>
+          </div>
+        </div>
+        <label class="check" id="f-frukostIngar"><input type="checkbox" id="frukostIngar" checked>
+          <span><b>Frukosten ingår i hotellpriset</b><small>Minskar det skattefria traktamentet men ger ingen kostförmån.</small></span></label>
+        <p class="hint">Enskilda måltider ändrar du per dag längre ner. Måltider som ingår i biljettpriset för flyg eller tåg räknas inte.</p>
+      </section>
+
+      <section class="step skv-only" id="step-belopp">
+        <div class="step-head"><span class="step-no">5</span><h2>Arbetsgivarens belopp</h2></div>
+        <div class="choice">
+          <label><input type="radio" name="skvBelopp" id="sb-norm" value="norm" checked>
+            <span><b>Skatteverkets normalbelopp</b><small>Allt blir skattefritt.</small></span></label>
+          <label><input type="radio" name="skvBelopp" id="sb-eget" value="eget">
+            <span><b>Egna belopp</b><small>Det som överstiger normalbeloppen blir skattepliktigt.</small></span></label>
+        </div>
+        <div class="grid2" id="f-eget" hidden>
+          <label class="field"><span>Heldag, kr</span><input type="number" id="egetHel" min="0" step="1" inputmode="decimal"></label>
+          <label class="field"><span>Halvdag, kr</span><input type="number" id="egetHalv" min="0" step="1" inputmode="decimal"></label>
+          <label class="field"><span>Nattraktamente, kr</span><input type="number" id="egetNatt" min="0" step="1" inputmode="decimal"></label>
+        </div>
+      </section>
+
+      <section class="step bygg-only" id="step-lang">
+        <div class="step-head"><span class="step-no">5</span><h2>Längre än två år</h2></div>
+        <label class="check"><input type="checkbox" id="forlangd">
+          <span><b>Förlängd rätt till traktamente</b><small>Projekt som varar längre än två år, eller skriftlig överenskommelse om förlängning (§6 2.6). Annars upphör traktamentet efter två år.</small></span></label>
+      </section>
+    </form>
+
+    <!-- SUMMARY -->
+    <aside class="summary" aria-live="polite">
+      <div class="panel sum-card">
+        <div class="total">
+          <span class="lbl" id="s-lbl">Utbetalt totalt</span>
+          <span class="big" id="s-total">0 kr</span>
+          <span class="hint" id="s-sub"></span>
+        </div>
+        <div class="bar" aria-hidden="true"><i class="b-free" id="bar-free"></i><i class="b-tax" id="bar-tax"></i></div>
+        <div class="kv">
+          <div class="item it-free"><span class="dot"></span><span class="t">Skattefritt<small>Ingen skatt, inga avgifter</small></span><span class="v" id="s-free">0 kr</span></div>
+          <div class="item it-tax"><span class="dot"></span><span class="t">Skattepliktigt<small id="s-tax-sub">Beskattas som lön</small></span><span class="v" id="s-tax">0 kr</span></div>
+          <div class="item it-ben" id="s-ben-row"><span class="dot"></span><span class="t">Kostförmån<small>Skattepliktig, betalas inte ut</small></span><span class="v" id="s-ben">0 kr</span></div>
+        </div>
+        <div class="msgs" id="msgs"></div>
+      </div>
+      <div class="panel sum-card">
+        <h3>Brytpunkter i förrättningen</h3>
+        <div class="milestones" id="milestones"></div>
+      </div>
+    </aside>
+  </div>
+
+  <section class="section">
+    <div class="panel">
+      <h2>Uppdelning</h2>
+      <div class="tscroll"><table id="breakdown"></table></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="panel">
+      <details id="dayDetails">
+        <summary>Dag för dag <span class="hint" id="dayCount" style="font-family:var(--f-body);font-weight:400"></span></summary>
+        <div style="display:grid;gap:10px;margin-top:12px">
+          <div class="row" style="justify-content:space-between;align-items:center">
+            <p class="hint">Ändra dagtyp för helgdagar, semester eller helger du stannar. F L M = fria måltider. <span class="bygg-only">"Arbete" styr förrättningstillägget.</span></p>
+            <button type="button" class="btn" id="resetDays">Återställ dagar</button>
+          </div>
+          <div class="tscroll" style="max-height:640px;overflow-y:auto"><table class="days" id="days"></table></div>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="panel">
+      <h2>Så räknar sidan</h2>
+      <div class="rules" id="rules"></div>
+      <p class="src">Källor: <a href="https://www.skatteverket.se/privat/skatter/beloppochprocent/2026.4.1522bf3f19aea8075ba21.html" target="_blank" rel="noopener">Skatteverket, belopp och procent 2026</a> · Byggavtalet 2025–2027 §6 · <a href="https://www.byggnadsarbetaren.se/traktamentet-hojs-for-forsta-gangen-pa-tva-ar/" target="_blank" rel="noopener">Byggnadsarbetaren: traktamentet höjs 2026</a>. Sidan är ett kontrollverktyg och ersätter inte lönesystemets beräkning.</p>
+    </div>
+  </section>
+</div>
+
+<div class="mbar" aria-hidden="true">
+  <div>Totalt<b id="m-total">0 kr</b></div>
+  <div style="color:var(--free)">Skattefritt<b id="m-free">0 kr</b></div>
+  <div style="color:var(--tax)">Skattepliktigt<b id="m-tax">0 kr</b></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- Belopp per inkomstår ---------- */
+const RATES = {
+  2025:{hel:290,halv:145,natt:145,bygg:435,kost:{f:61,lm:122,max:305}},
+  2026:{hel:300,halv:150,natt:150,bygg:450,kost:{f:62,lm:124,max:310}}
+};
+const YEARS = Object.keys(RATES).map(Number).sort();
+const rateYear = y => RATES[y] ? y : (y < YEARS[0] ? YEARS[0] : YEARS[YEARS.length-1]);
+
+/* ---------- Datum ---------- */
+const DAY = 864e5;
+const D = s => { const [y,m,d] = s.split("-").map(Number); return Date.UTC(y,m-1,d); };
+const S = t => new Date(t).toISOString().slice(0,10);
+const addMonths = (s,n) => { const [y,m,d] = s.split("-").map(Number); return S(Date.UTC(y,m-1+n,d)); };
+const dow = t => new Date(t).getUTCDay();
+const mins = hm => { if(!hm) return 0; const [h,m] = hm.split(":").map(Number); return h*60+(m||0); };
+const validDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s||"");
+const WD = ["sön","mån","tis","ons","tor","fre","lör"];
+const MO = ["jan","feb","mar","apr","maj","jun","jul","aug","sep","okt","nov","dec"];
+const fmtDay = t => { const d = new Date(t); return WD[d.getUTCDay()]+" "+d.getUTCDate()+" "+MO[d.getUTCMonth()]; };
+const fmtDate = s => { const d = new Date(D(s)); return d.getUTCDate()+" "+MO[d.getUTCMonth()]+" "+d.getUTCFullYear(); };
+
+const nf = new Intl.NumberFormat("sv-SE",{minimumFractionDigits:2,maximumFractionDigits:2});
+const nf0 = new Intl.NumberFormat("sv-SE",{maximumFractionDigits:0});
+const kr = v => { const r = Math.round(v*100)/100; return (Number.isInteger(r) ? nf0.format(r) : nf.format(r)) + " kr"; };
+const r2 = v => Math.round(v*100)/100;
+
+/* ---------- Tillstånd ---------- */
+function todayMonday(){
+  const n = new Date(); const t = Date.UTC(n.getFullYear(), n.getMonth(), n.getDate());
+  const w = dow(t); return S(t + ((8 - w) % 7 || 7) * DAY);
+}
+function defaults(){
+  const start = todayMonday();
+  const end = S(D(start) + 39*DAY); // fredag vecka 6
+  return {
+    regel:"bygg", omfang:"hela",
+    avresa:start, avresaTid:"06:30", hemkomst:end, hemTid:"16:00",
+    forrStart:addMonths(start,-4), periodFran:start, periodTill:S(D(start)+27*DAY), slutarHemresa:false, slutTid:"16:00",
+    logi:"egen", tillaggRatt:true,
+    helg:"hemma", fredagFore19:true, mandagFore12:true,
+    friKost:false, mF:false, mL:false, mM:false, frukostIngar:true,
+    skvBelopp:"norm", egetHel:"", egetHalv:"", egetNatt:"",
+    forlangd:false,
+    over:{}
+  };
+}
+let st = defaults();
+try { const saved = JSON.parse(localStorage.getItem("traktamenteskollen.v1")||"null"); if(saved && typeof saved==="object") st = Object.assign(defaults(), saved, {over:saved.over||{}}); } catch(e){}
+const save = () => { try { localStorage.setItem("traktamenteskollen.v1", JSON.stringify(st)); } catch(e){} };
+
+/* ---------- Måltidsreduktion (Skatteverket, inrikes) ---------- */
+const pct = (x,p) => Math.round(x*p/100 + 1e-9);
+function mealRed(x,f,l,m){
+  if(!x) return 0;
+  const n = (l?1:0)+(m?1:0);
+  if(f && n===2) return pct(x,90);
+  if(n===2) return pct(x,70);
+  if(f && n===1) return pct(x,20)+pct(x,35);
+  if(n===1) return pct(x,35);
+  if(f) return pct(x,20);
+  return 0;
+}
+
+/* ---------- Beräkning ---------- */
+function compute(){
+  const whole = st.omfang==="hela";
+  const msgs = [];
+  const start = whole ? st.avresa : st.periodFran;
+  const end   = whole ? st.hemkomst : st.periodTill;
+  const forr  = whole ? st.avresa : st.forrStart;
+  const endsHome = whole ? true : !!st.slutarHemresa;
+  const depMin = whole ? mins(st.avresaTid) : 0;
+  const retMin = mins(whole ? st.hemTid : st.slutTid);
+
+  if(![start,end,forr].every(validDate)) return {rows:[], msgs:[{t:"err",m:"Fyll i alla datum."}]};
+  if(D(end) < D(start)) return {rows:[], msgs:[{t:"err",m:"Sista dagen ligger före första dagen. Kontrollera datumen."}]};
+  if(!whole && D(start) < D(forr)) return {rows:[], msgs:[{t:"err",m:"Perioden kan inte börja innan förrättningen påbörjades."}]};
+  if((D(end)-D(start))/DAY > 1100) return {rows:[], msgs:[{t:"err",m:"Perioden är för lång. Räkna högst tre år åt gången."}]};
+  if(whole && start===end) return {rows:[], msgs:[{t:"err",m:"Resan saknar övernattning. Traktamente förutsätter att du övernattar på förrättningsorten."}]};
+
+  const bygg = st.regel==="bygg";
+  const t3m = D(addMonths(forr,3)), t2y = D(addMonths(forr,24));
+  const tForr = D(forr), tEnd = D(end), tStart = D(start);
+
+  const typeOf = t => {
+    if(t < tForr) return "ute";
+    if(endsHome && t > tEnd) return "ute";
+    const s = S(t);
+    if(whole && s===start) return "avresa";
+    if(endsHome && t===tEnd) return "hemresa";
+    const o = st.over[s]; if(o && o.typ) return o.typ;
+    const w = dow(t);
+    if(w===0 || w===6) return st.helg==="hemma" ? "ledigHemma" : "ledigKvar";
+    return "arbete";
+  };
+  const isLedig = ty => ty==="ledigKvar" || ty==="ledigHemma";
+
+  const rows = [];
+  let yearFallback = false;
+  for(let t=tStart; t<=tEnd; t+=DAY){
+    const s = S(t), typ = typeOf(t), prev = typeOf(t-DAY), next = typeOf(t+DAY);
+    const y = new Date(t).getUTCFullYear(), ry = rateYear(y);
+    if(ry!==y) yearFallback = y;
+    const R = RATES[ry];
+    const o = st.over[s] || {};
+    const atOrten = typ!=="ledigHemma";
+    const travelHome = (typ==="arbete"||typ==="avresa") && next==="ledigHemma";
+    const travelBack = (typ==="arbete"||typ==="hemresa") && prev==="ledigHemma";
+    const night = st.logi==="egen" && atOrten && typ!=="hemresa" && !travelHome;
+    const prevNightAtOrten = atOrten && typ!=="avresa" && !travelBack;
+
+    // Skattefritt: period efter Skatteverkets regler för långvarig tjänsteresa
+    const per = t < t3m ? 1 : (t < t2y ? 2 : 3);
+    const factor = per===1 ? 1 : (per===2 ? .7 : .5);
+    const full = R.hel*factor;
+    const half = per===1 ? R.halv : Math.round(full/2);
+
+    let kind = "hel";
+    if(typ==="avresa") kind = depMin <= 720 ? "hel" : "halv";
+    else if(typ==="hemresa") kind = retMin >= 1140 ? "hel" : "halv";
+    else if(typ==="ledigHemma") kind = "ingen";
+    if(kind==="hel" && travelHome && st.fredagFore19) kind = "halv";
+    if(kind==="hel" && travelBack && !st.mandagFore12) kind = "halv";
+    const dagBelopp = kind==="hel" ? full : kind==="halv" ? half : 0;
+
+    // Måltider
+    const allMeals = bygg && st.friKost;
+    const dF = atOrten && prevNightAtOrten && (allMeals || st.mF);
+    const dL = atOrten && (allMeals || st.mL);
+    const dM = atOrten && (allMeals || st.mM);
+    const mf = o.f ?? dF, ml = o.l ?? dL, mm = o.m ?? dM;
+    const red = mealRed(dagBelopp, mf, ml, mm);
+    const tfDag = Math.max(0, dagBelopp - red);
+    const tfNatt = night ? R.natt : 0;
+    const K = R.kost;
+    const kost = atOrten || mf || ml || mm ? Math.min(K.max, (mf && !(st.frukostIngar && !allMeals) ? K.f : 0) + (ml?K.lm:0) + (mm?K.lm:0)) : 0;
+
+    let paid = 0, taxFree = 0, till = 0, tillPct = 0, worked = false, capped = false, ledigIdx = 0, rightEnded = false;
+    if(bygg){
+      const T = R.bygg;
+      rightEnded = t >= t2y && !st.forlangd;
+      if(isLedig(typ)){
+        let k = t-DAY; while(isLedig(typeOf(k)) && ledigIdx < 40){ ledigIdx++; k-=DAY; }
+      }
+      let base = 0;
+      if(typ==="avresa") base = depMin <= 720 ? T : T/2;
+      else if(typ==="hemresa") base = retMin >= 1140 ? T : T/2;
+      else if(typ==="arbete") base = T;
+      else if(isLedig(typ)){ if(ledigIdx < 2) base = T; else capped = true; }
+      const mult = 1 - (st.logi==="ag" ? .35 : 0) - (st.friKost ? .55 : 0);
+      paid = rightEnded ? 0 : r2(base*mult);
+      taxFree = Math.min(paid, tfDag + tfNatt);
+      const defWorked = typ==="arbete" || typ==="hemresa" || (typ==="avresa" && depMin <= 720);
+      worked = isLedig(typ) ? false : (o.arbete ?? defWorked);
+      if(st.logi==="egen" && st.tillaggRatt && worked && !rightEnded){
+        const dayNum = (t - tForr)/DAY + 1;
+        tillPct = dayNum <= 90 ? 35 : 20;
+        till = r2(T*tillPct/100);
+      }
+    } else {
+      if(st.skvBelopp==="norm"){
+        paid = tfDag + tfNatt; taxFree = paid;
+      } else {
+        const eh = Number(st.egetHel)||0, ehh = Number(st.egetHalv)||0, en = Number(st.egetNatt)||0;
+        const own = kind==="hel" ? eh : kind==="halv" ? ehh : 0;
+        const pDag = Math.max(0, own - mealRed(own, mf, ml, mm));
+        const pNatt = night ? en : 0;
+        paid = r2(pDag + pNatt);
+        taxFree = Math.min(pDag, tfDag) + Math.min(pNatt, tfNatt);
+      }
+    }
+    const taxable = r2(paid - taxFree);
+
+    // Förklaring till skattepliktig del
+    let why = "";
+    if(taxable > 0){
+      if(typ==="ledigHemma") why = "Du är hemma. Traktamente för lediga dagar hemma är inte skattefritt.";
+      else if(typ==="hemresa" && st.logi==="egen") why = "Ingen övernattning. Logidelen (nattraktamentet) blir skattepliktig.";
+      else if(travelHome) why = "Du reser hem. Ingen natt på orten, så logidelen blir skattepliktig" + (kind==="halv" ? " och bara halvdag är skattefri." : ".");
+      else if(kind==="halv") why = "Bara halvdag är skattefri denna dag.";
+      else if(red) why = "Fria måltider sänker det skattefria beloppet.";
+      else if(per>1) why = `Skattefritt dagtraktamente är ${per===2?"70":"50"} % efter ${per===2?"tre månader":"två år"}.`;
+      else why = "Utbetalt belopp är högre än det skattefria.";
+    }
+
+    rows.push({why,t,s,typ,kind,per,factor,night,travelHome,travelBack,mf,ml,mm,red,dagBelopp,tfDag,tfNatt,paid,taxFree,taxable,till,tillPct,worked,kost,capped,rightEnded,ledigIdx,
+      canEditType: !(typ==="avresa"||typ==="hemresa")});
+  }
+
+  // Meddelanden
+  if(yearFallback) msgs.push({t:"warn", m:`Belopp för ${yearFallback} är inte fastställda. ${YEARS[YEARS.length-1]} års belopp används.`});
+  if(bygg && rows.some(r=>r.rightEnded)) msgs.push({t:"warn", m:"Perioden passerar två år på samma förrättningsort. Traktamente och förrättningstillägg upphör om ingen förlängning är avtalad."});
+  if(rows.some(r=>r.capped)) msgs.push({t:"info", m:"Lediga dagar utöver två i följd ger inget traktamente enligt Byggavtalet §6 2.8."});
+  if(rows.some(r=>r.per===2) && !rows.some(r=>r.per===1)) msgs.push({t:"info", m:"Hela perioden ligger efter tre månader: skattefritt dagtraktamente är 70 %."});
+  if(bygg && st.logi==="egen" && !st.tillaggRatt) msgs.push({t:"info", m:"Förrättningstillägg räknas inte med."});
+  return {rows, msgs, forr, whole, bygg, t3m, t2y, start, end, endsHome};
+}
+
+/* ---------- Rendering ---------- */
+const $ = id => document.getElementById(id);
+const TYPE_LABEL = {avresa:"Avresedag", hemresa:"Hemresedag", arbete:"Arbetsdag", ledigKvar:"Ledig på orten", ledigHemma:"Ledig hemma"};
+
+function render(){
+  const res = compute();
+  const {rows, msgs} = res;
+  const bygg = st.regel==="bygg";
+  document.querySelectorAll(".bygg-only").forEach(el => el.hidden = !bygg);
+  document.querySelectorAll(".skv-only").forEach(el => el.hidden = bygg);
+  $("f-tillagg").hidden = !bygg || st.logi!=="egen";
+  $("f-hemresa").hidden = st.helg!=="hemma";
+  $("f-eget").hidden = st.skvBelopp!=="eget";
+  $("f-frukostIngar").hidden = !(st.mF) || (bygg && st.friKost);
+  $("logi-ag-desc").textContent = bygg ? "Traktamentet minskas med 35 %. Inget nattraktamente, inget förrättningstillägg." : "Inget nattraktamente.";
+  ["mF","mL","mM"].forEach(id => { $(id).disabled = bygg && st.friKost; if(bygg && st.friKost) $(id).checked = true; else $(id).checked = !!st[id]; });
+  $("p-hela").hidden = st.omfang!=="hela"; $("p-del").hidden = st.omfang!=="del";
+  $("f-slutTid").hidden = !st.slutarHemresa;
+  ["bygg","skv"].forEach(k => $("rv-"+k).setAttribute("aria-pressed", String(st.regel===k)));
+  ["hela","del"].forEach(k => $("om-"+k).setAttribute("aria-pressed", String(st.omfang===k)));
+
+  const sum = rows.reduce((a,r)=>{ a.paid+=r.paid; a.free+=r.taxFree; a.tax+=r.taxable; a.till+=r.till; a.kost+=r.kost; return a; }, {paid:0,free:0,tax:0,till:0,kost:0});
+  const cash = sum.paid + sum.till, taxCash = sum.tax + sum.till;
+  $("s-total").textContent = kr(cash);
+  $("s-sub").textContent = rows.length ? `${rows.length} dagar · ${fmtDate(rows[0].s)} – ${fmtDate(rows[rows.length-1].s)}` : "";
+  $("s-free").textContent = kr(sum.free);
+  $("s-tax").textContent = kr(taxCash);
+  $("s-tax-sub").textContent = bygg && sum.till ? `varav förrättningstillägg ${kr(sum.till)}` : "Beskattas som lön";
+  $("s-ben").textContent = kr(sum.kost);
+  $("s-ben-row").hidden = !sum.kost;
+  const pf = cash ? sum.free/cash*100 : 0;
+  $("bar-free").style.width = pf+"%"; $("bar-tax").style.width = (cash ? 100-pf : 0)+"%";
+  $("m-total").textContent = kr(cash); $("m-free").textContent = kr(sum.free); $("m-tax").textContent = kr(taxCash);
+
+  $("msgs").innerHTML = msgs.map(x => `<div class="msg ${x.t==="err"?"err":x.t==="info"?"info":""}">${x.m}</div>`).join("");
+  $("hint-period").textContent = st.omfang==="hela"
+    ? "Avresa senast 12.00 ger heldag, hemkomst från 19.00 ger heldag. Övriga tider ger halvdag."
+    : "Används för att kontrollera t.ex. en lönemånad mitt i en lång förrättning. Tremånaders- och 90-dagarsgränserna räknas från förrättningens start.";
+
+  renderMilestones(res);
+  renderBreakdown(res, sum);
+  renderDays(res);
+  renderRules();
+  save();
+}
+
+function renderMilestones(res){
+  if(!res.forr || !validDate(res.forr)){ $("milestones").innerHTML = ""; return; }
+  const f = res.forr, last = res.rows.length ? res.rows[res.rows.length-1].t : D(f);
+  const items = [["Dag 1", f]];
+  if(res.bygg) items.push(["Dag 91: förrättningstillägg 20 %", S(D(f)+90*DAY)]);
+  items.push(["3 månader: skattefritt 70 %", addMonths(f,3)]);
+  items.push([res.bygg ? "2 år: traktamentsrätten upphör" : "2 år: skattefritt 50 %", addMonths(f,24)]);
+  items.sort((a,b)=>D(a[1])-D(b[1]));
+  $("milestones").innerHTML = items.map(([l,d]) => `<div class="${D(d) > last ? "past" : ""}"><span>${l}</span><span class="num">${fmtDate(d)}</span></div>`).join("")
+    + `<p class="hint" style="margin-top:4px">Grått = efter vald period. Hemmahelger bryter inte förrättningen.</p>`;
+}
+
+function renderBreakdown(res, sum){
+  const rows = res.rows, bygg = res.bygg;
+  const g = (label, filter) => { const rs = rows.filter(filter); return {label, n:rs.length, paid:rs.reduce((a,r)=>a+r.paid,0), free:rs.reduce((a,r)=>a+r.taxFree,0), tax:rs.reduce((a,r)=>a+r.taxable,0)}; };
+  const lines = [
+    g("Traktamente, arbetsdagar", r => r.typ==="arbete"),
+    g("Traktamente, avrese- och hemresedag", r => r.typ==="avresa"||r.typ==="hemresa"),
+    g(bygg ? "Mellanliggande lediga dagar på orten" : "Lediga dagar på orten", r => r.typ==="ledigKvar"),
+  ];
+  if(bygg) lines.push(g("Mellanliggande lediga dagar hemma (hemmahelg)", r => r.typ==="ledigHemma" && r.paid>0));
+  const out = lines.filter(l => l.n && (l.paid || l.label.startsWith("Traktamente")));
+  if(bygg){
+    [35,20].forEach(p => { const rs = rows.filter(r=>r.tillPct===p && r.till); if(rs.length){ const v = rs.reduce((a,r)=>a+r.till,0); out.push({label:`Förrättningstillägg ${p} %`, n:rs.length, paid:v, free:0, tax:v}); } });
+  }
+  const tot = out.reduce((a,l)=>({paid:a.paid+l.paid, free:a.free+l.free, tax:a.tax+l.tax}),{paid:0,free:0,tax:0});
+  let html = `<thead><tr><th>Post</th><th class="r">Dagar</th><th class="r">Utbetalt</th><th class="r">Skattefritt</th><th class="r">Skattepliktigt</th></tr></thead><tbody>`;
+  html += out.map(l => `<tr><td>${l.label}</td><td class="r num">${l.n}</td><td class="money">${kr(l.paid)}</td><td class="money c-free">${kr(l.free)}</td><td class="money c-tax">${kr(l.tax)}</td></tr>`).join("");
+  html += `</tbody><tfoot><tr><td>Summa kontant</td><td></td><td class="money">${kr(tot.paid)}</td><td class="money c-free">${kr(tot.free)}</td><td class="money c-tax">${kr(tot.tax)}</td></tr>`;
+  if(sum.kost) html += `<tr><td style="border-top:0;font-weight:500">Kostförmån (läggs på bruttolönen)</td><td style="border-top:0"></td><td class="money c-mute" style="border-top:0">–</td><td class="money c-mute" style="border-top:0">–</td><td class="money c-ben" style="border-top:0">${kr(sum.kost)}</td></tr>`;
+  html += `</tfoot>`;
+  if(!rows.length) html = `<tbody><tr><td class="c-mute">Ingen beräkning ännu.</td></tr></tbody>`;
+  $("breakdown").innerHTML = html;
+}
+
+function renderDays(res){
+  const bygg = res.bygg, rows = res.rows;
+  $("dayCount").textContent = rows.length ? `· ${rows.length} dagar` : "";
+  let html = `<thead><tr><th>Datum</th><th>Dagtyp</th><th>Måltider</th>${bygg?'<th>Arbete</th>':''}<th>Skattefri grund</th><th class="r">Utbetalt</th><th class="r">Skattefritt</th><th class="r">Skatteplikt.</th>${bygg?'<th class="r">Tillägg</th>':''}</tr></thead><tbody>`;
+  let prevMonth = -1;
+  for(const r of rows){
+    const d = new Date(r.t), w = d.getUTCDay(), mo = d.getUTCMonth();
+    const cls = [(w===0||w===6)?"wknd":"", r.typ==="ledigHemma"?"home":"", (prevMonth>=0 && mo!==prevMonth)?"monthsep":""].join(" ");
+    prevMonth = mo;
+    const typeCell = r.canEditType
+      ? `<select data-d="${r.s}" data-k="typ" aria-label="Dagtyp ${r.s}">${["arbete","ledigKvar","ledigHemma"].map(k=>`<option value="${k}"${r.typ===k?" selected":""}>${TYPE_LABEL[k]}</option>`).join("")}</select>`
+      : `<b>${TYPE_LABEL[r.typ]}</b>`;
+    const meal = (k,l,v) => `<label title="${l}"><input type="checkbox" data-d="${r.s}" data-k="${k}"${v?" checked":""} aria-label="${l} ${r.s}">${l[0]}</label>`;
+    const chips = [];
+    if(r.kind==="hel") chips.push(`<span class="chip">Heldag</span>`); else if(r.kind==="halv") chips.push(`<span class="chip">Halvdag</span>`);
+    if(r.night) chips.push(`<span class="chip">+ natt</span>`);
+    if(r.per===2 && r.kind!=="ingen") chips.push(`<span class="chip p2">70 %</span>`);
+    if(r.per===3 && r.kind!=="ingen") chips.push(`<span class="chip p3">50 %</span>`);
+    if(r.red) chips.push(`<span class="chip">−${r.red} mat</span>`);
+    if(r.travelHome) chips.push(`<span class="chip">Hemresa</span>`);
+    if(r.travelBack) chips.push(`<span class="chip">Återresa</span>`);
+    if(r.capped) chips.push(`<span class="chip p3">3:e lediga dagen</span>`);
+    if(r.rightEnded) chips.push(`<span class="chip p3">Efter 2 år</span>`);
+    if(!chips.length) chips.push(`<span class="c-mute">–</span>`);
+    const workCell = bygg ? `<td>${r.typ==="arbete"||r.typ==="avresa"||r.typ==="hemresa" ? `<input type="checkbox" data-d="${r.s}" data-k="arbete"${r.worked?" checked":""} aria-label="Arbete ${r.s}" style="accent-color:var(--accent)">` : '<span class="c-mute">–</span>'}</td>` : "";
+    html += `<tr class="${cls}"><td class="num">${fmtDay(r.t)}</td><td>${typeCell}</td><td><span class="meal">${r.typ==="ledigHemma"?'<span class="c-mute">–</span>':meal("f","Frukost",r.mf)+meal("l","Lunch",r.ml)+meal("m","Middag",r.mm)}</span></td>${workCell}<td>${chips.join("")}${r.why?`<div class="why">${r.why}</div>`:""}</td><td class="money">${kr(r.paid)}</td><td class="money c-free">${kr(r.taxFree)}</td><td class="money ${r.taxable?"c-tax":"c-mute"}">${kr(r.taxable)}</td>${bygg?`<td class="money ${r.till?"c-tax":"c-mute"}">${r.till?kr(r.till)+` <span class="c-mute" style="font-size:11px">${r.tillPct}%</span>`:"–"}</td>`:""}</tr>`;
+  }
+  html += `</tbody>`;
+  $("days").innerHTML = rows.length ? html : `<tbody><tr><td class="c-mute">Inga dagar att visa.</td></tr></tbody>`;
+}
+
+function renderRules(){
+  const y = YEARS[YEARS.length-1], R = RATES[y], P = RATES[y-1];
+  const bygg = st.regel==="bygg";
+  const byggHtml = `<div><h3>Byggavtalet §6 (${y})</h3><ul>
+    <li>Traktamente <b class="num">${R.bygg} kr</b> per dag inkl. kost och logi (${y-1}: ${P.bygg} kr). Krav: minst 70 km enkel väg och övernattning.</li>
+    <li>Avresa efter 12.00 eller hemkomst före 19.00 vid start/slut: halvt traktamente.</li>
+    <li>Fri logi: −35 %. Fri kost: −55 %.</li>
+    <li>Förrättningstillägg: 35 % (<span class="num">${kr(R.bygg*.35)}</span>) per arbetsdag dag 1–90, därefter 20 % (<span class="num">${kr(R.bygg*.2)}</span>). Skattepliktigt. Inte vid fri logi.</li>
+    <li>Mellanliggande ledighet: ett traktamente per dag, högst två i följd.</li>
+    <li>Rätten gäller högst två år på samma förrättningsort (radie 3,5 mil).</li></ul></div>`;
+  const skvHtml = `<div><h3>Skattefria belopp ${y} (${y-1})</h3><ul>
+    <li>Heldag <b class="num">${R.hel} kr</b> (${P.hel}) · halvdag <span class="num">${R.halv} kr</span> (${P.halv})</li>
+    <li>Nattraktamente <span class="num">${R.natt} kr</span> (${P.natt}), bara om du ordnar logi själv. Minskas inte vid lång resa.</li>
+    <li>Efter 3 månader: <span class="num">${R.hel*.7} kr</span> (70 %). Efter 2 år: <span class="num">${R.hel*.5} kr</span> (50 %).</li>
+    <li>Kräver övernattning och mer än 50 km från både bostad och arbetsplats.</li>
+    <li>Det som betalas ut över det skattefria är lön.</li></ul></div>`;
+  const mealHtml = `<div><h3>Måltider ${y}</h3><ul>
+    <li>Minskning heldag: frukost <span class="num">${pct(R.hel,20)}</span>, lunch eller middag <span class="num">${pct(R.hel,35)}</span>, lunch och middag <span class="num">${pct(R.hel,70)}</span>, alla tre <span class="num">${pct(R.hel,90)} kr</span>.</li>
+    <li>Efter 3 mån: <span class="num">${pct(R.hel*.7,20)} / ${pct(R.hel*.7,35)} / ${pct(R.hel*.7,70)} / ${pct(R.hel*.7,90)} kr</span>.</li>
+    <li>Kostförmån: frukost <span class="num">${R.kost.f}</span>, lunch/middag <span class="num">${R.kost.lm}</span>, hel dag <span class="num">${R.kost.max} kr</span>. Hotellfrukost som ingår i rumspriset ger ingen förmån.</li></ul></div>`;
+  const assump = `<div><h3>Antaganden</h3><ul>
+    <li>Hemmahelg: dagen du reser hem ger ingen natt, dagarna hemma ger inget skattefritt. Byggavtalets två traktamenten för helgen blir då skattepliktiga.</li>
+    <li>Hemresedagen: Byggavtalet betalar hela beloppet inkl. logi, men utan övernattning är nattraktamentet inte skattefritt. Den delen blir lön.</li>
+    <li>Halvdag efter tre månader räknas som hälften av det reducerade heldagsbeloppet.</li>
+    <li>Belopp väljs efter kalenderår dag för dag.</li></ul></div>`;
+  $("rules").innerHTML = (bygg ? byggHtml : "") + skvHtml + mealHtml + assump;
+}
+
+/* ---------- Koppla formulär ---------- */
+const bindIds = ["avresa","avresaTid","hemkomst","hemTid","forrStart","periodFran","periodTill","slutTid","egetHel","egetHalv","egetNatt"];
+const checkIds = ["slutarHemresa","tillaggRatt","fredagFore19","mandagFore12","friKost","mF","mL","mM","frukostIngar","forlangd"];
+function fill(){
+  bindIds.forEach(id => $(id).value = st[id] ?? "");
+  checkIds.forEach(id => $(id).checked = !!st[id]);
+  $("logi-"+st.logi).checked = true;
+  $("helg-"+st.helg).checked = true;
+  $("sb-"+st.skvBelopp).checked = true;
+}
+bindIds.forEach(id => $(id).addEventListener("input", e => { st[id] = e.target.value; render(); }));
+checkIds.forEach(id => $(id).addEventListener("change", e => { st[id] = e.target.checked; render(); }));
+document.querySelectorAll('input[name="logi"]').forEach(el => el.addEventListener("change", e => { st.logi = e.target.value; render(); }));
+document.querySelectorAll('input[name="helg"]').forEach(el => el.addEventListener("change", e => {
+  st.helg = e.target.value;
+  // Rensa helgdagar som bara speglade förra valet
+  for(const k in st.over){ const w = dow(D(k)); if((w===0||w===6) && st.over[k].typ){ delete st.over[k].typ; if(!Object.keys(st.over[k]).length) delete st.over[k]; } }
+  render();
+}));
+document.querySelectorAll('input[name="skvBelopp"]').forEach(el => el.addEventListener("change", e => {
+  st.skvBelopp = e.target.value;
+  if(st.skvBelopp==="eget" && !st.egetHel){ const R = RATES[rateYear(new Date().getFullYear())]; st.egetHel = R.hel; st.egetHalv = R.halv; st.egetNatt = R.natt; fill(); }
+  render();
+}));
+document.querySelectorAll("[data-regel]").forEach(b => b.addEventListener("click", () => { st.regel = b.dataset.regel; render(); }));
+document.querySelectorAll("[data-omfang]").forEach(b => b.addEventListener("click", () => { st.omfang = b.dataset.omfang; render(); }));
+$("form").addEventListener("submit", e => e.preventDefault());
+
+$("days").addEventListener("change", e => {
+  const el = e.target, d = el.dataset.d, k = el.dataset.k; if(!d || !k) return;
+  const o = st.over[d] || (st.over[d] = {});
+  o[k] = el.type==="checkbox" ? el.checked : el.value;
+  render();
+});
+$("resetDays").addEventListener("click", () => { st.over = {}; render(); });
+
+fill();
+render();
+})();
+</script>
+</body>
+</html>
