@@ -19,6 +19,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Traktamenteskollen: räkna ut skattefritt och skattepliktigt traktamente 2026">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
 <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <script type="application/ld+json">
@@ -63,13 +64,14 @@
   --free:#1f7a52; --free-soft:#e2f2ea; --tax:#b5610b; --tax-soft:#fbeedd; --benefit:#6b4fa0; --benefit-soft:#eee8f7;
   --warn:#9a5b00; --warn-soft:#fff4dc; --err:#b3261e; --err-soft:#fde7e5;
   --radius:10px;
+  --logo-light:block; --logo-dark:none;
   --f-display:"Archivo", "Helvetica Neue", Arial, sans-serif;
   --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --f-mono:"IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    color-scheme:dark;
+    color-scheme:dark; --logo-light:none; --logo-dark:block;
     --bg:#0f161c; --surface:#17212a; --surface-2:#1c2833; --ink:#e6ecf0; --muted:#93a1ac; --line:#2a3742;
     --accent:#6aa6d8; --accent-ink:#0b1620; --accent-soft:#1d3346;
     --free:#4cc38a; --free-soft:#163327; --tax:#f0a24a; --tax-soft:#3a2915; --benefit:#b39ae0; --benefit-soft:#2a2340;
@@ -77,7 +79,7 @@
   }
 }
 :root[data-theme="dark"]{
-  color-scheme:dark;
+  color-scheme:dark; --logo-light:none; --logo-dark:block;
   --bg:#0f161c; --surface:#17212a; --surface-2:#1c2833; --ink:#e6ecf0; --muted:#93a1ac; --line:#2a3742;
   --accent:#6aa6d8; --accent-ink:#0b1620; --accent-soft:#1d3346;
   --free:#4cc38a; --free-soft:#163327; --tax:#f0a24a; --tax-soft:#3a2915; --benefit:#b39ae0; --benefit-soft:#2a2340;
@@ -89,6 +91,9 @@ body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);margin:0}
 .wrap{max-width:1200px;margin:0 auto;padding-inline:20px;padding-block:28px 96px}
 h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
 h1{font-size:30px;font-weight:800}
+h1.logo{margin:0 0 8px;line-height:0}
+h1.logo img{height:64px;width:auto;max-width:100%}
+.logo-l{display:var(--logo-light)} .logo-d{display:var(--logo-dark)}
 h2{font-size:17px;font-weight:700}
 h3{font-size:14px;font-weight:700}
 .num,.money{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
@@ -247,6 +252,7 @@ details[open] > summary::before{transform:rotate(45deg)}
 @media (max-width:480px){
   .wrap{padding-inline:16px}
   h1{font-size:25px}
+  h1.logo img{height:44px}
   .step,.sum-card,.section > .panel{padding:16px}
   .total .big{font-size:27px}
 }
@@ -258,7 +264,7 @@ details[open] > summary::before{transform:rotate(45deg)}
 <div class="wrap">
   <header class="top">
     <div>
-      <h1>Traktamenteskollen</h1>
+      <h1 class="logo"><img class="logo-l" src="logo-light.png" alt="Traktamenteskollen" width="662" height="128"><img class="logo-d" src="logo-dark.png" alt="Traktamenteskollen" width="662" height="128"></h1>
       <p>Räkna fram och kontrollera traktamente 2026 enligt Skatteverket eller Byggavtalet. Du ser direkt vad som är skattefritt och vad som blir skattepliktig lön.</p>
     </div>
     <div class="head-actions">
@@ -959,7 +965,7 @@ function fileBase(){
 
 function buildPrint(){
   const {res} = last, t = totals(), bygg = res.bygg, lines = breakdownLines(res), tot = sumLines(lines);
-  let h = `<div class="pr-head"><h1>Traktamenteskollen</h1><div>Beräknad ${nowStamp()}<br>traktamenteskollen.vercel.app</div></div>`;
+  let h = `<div class="pr-head"><img src="logo-light.png" alt="Traktamenteskollen" style="height:40px;width:auto"><div>Beräknad ${nowStamp()}<br>traktamenteskollen.vercel.app</div></div>`;
   h += `<h2>Förutsättningar</h2><div class="pr-grid">${inputSummary().map(([k,v])=>`<div><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join("")}</div>`;
   h += `<h2>Summering</h2><div class="pr-totals">
     <div><small>Utbetalt totalt</small><b>${kr(t.cash)}</b></div>
