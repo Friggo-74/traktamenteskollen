@@ -197,6 +197,36 @@ details[open] > summary::before{transform:rotate(45deg)}
 .faq details{border-top:1px solid var(--line);padding-top:10px}
 .faq details > summary h3{font-size:15px;font-weight:600}
 .faq details p{margin:8px 0 2px;max-width:70ch;color:var(--ink)}
+.export{display:flex;gap:8px;flex-wrap:wrap}
+.export .btn{flex:1 1 140px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+#printReport{display:none}
+@media print{
+  @page{size:A4;margin:14mm 12mm}
+  :root,:root[data-theme="dark"],:root:not([data-theme="light"]){color-scheme:light;--bg:#fff;--surface:#fff;--surface-2:#f4f6f8;--ink:#111;--muted:#555;--line:#ccd3d9;--free:#17613f;--tax:#8f4b06;--benefit:#553e82}
+  body{background:#fff;font-size:10.5pt}
+  body > *:not(#printReport){display:none!important}
+  #printReport{display:block}
+  .pr-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #111;padding-bottom:6px;margin-bottom:10px}
+  .pr-head h1{font-size:18pt}
+  .pr-head div{font-size:9pt;color:#555;text-align:right}
+  #printReport h2{font-size:12pt;margin:14px 0 6px}
+  .pr-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;font-size:9.5pt}
+  .pr-grid div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dotted #ccd3d9;padding:2px 0}
+  .pr-grid span:first-child{color:#555}
+  .pr-totals{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .pr-totals div{border:1px solid #ccd3d9;border-radius:6px;padding:6px 8px}
+  .pr-totals small{display:block;font-size:8pt;text-transform:uppercase;letter-spacing:.05em;color:#555}
+  .pr-totals b{font-family:var(--f-mono);font-size:12pt}
+  #printReport table{font-size:8.5pt}
+  #printReport th,#printReport td{padding:3px 5px;white-space:nowrap}
+  #printReport td.wrap{white-space:normal}
+  #printReport tr:has(+ .pr-why) td{border-bottom:0}
+  #printReport .pr-why td{padding-top:0;font-size:8pt;color:var(--tax)}
+  #printReport tr{break-inside:avoid}
+  #printReport thead{display:table-header-group}
+  .pr-note{font-size:8pt;color:#555;margin-top:12px}
+}
 .head-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .btn{font:600 13px var(--f-body);border:1px solid var(--line);background:var(--surface-2);color:var(--ink);padding:7px 12px;border-radius:8px;cursor:pointer}
 .btn:hover{border-color:var(--accent)}
@@ -359,6 +389,10 @@ details[open] > summary::before{transform:rotate(45deg)}
           <div class="item it-ben" id="s-ben-row"><span class="dot"></span><span class="t">Kostförmån<small>Skattepliktig, betalas inte ut</small></span><span class="v" id="s-ben">0 kr</span></div>
         </div>
         <div class="msgs" id="msgs"></div>
+        <div class="export">
+          <button type="button" class="btn" id="exportPdf">Spara som PDF</button>
+          <button type="button" class="btn" id="exportXlsx">Exportera till Excel</button>
+        </div>
       </div>
       <div class="panel sum-card">
         <h3>Brytpunkter i förrättningen</h3>
@@ -423,6 +457,8 @@ details[open] > summary::before{transform:rotate(45deg)}
     </div>
   </section>
 </div>
+
+<section id="printReport" aria-hidden="true"></section>
 
 <div class="mbar" aria-hidden="true">
   <div>Totalt<b id="m-total">0 kr</b></div>
@@ -644,6 +680,7 @@ function compute(){
 
 /* ---------- Rendering ---------- */
 const $ = id => document.getElementById(id);
+let last = null;
 const TYPE_LABEL = {avresa:"Avresedag", hemresa:"Hemresedag", arbete:"Arbetsdag", ledigKvar:"Ledig på orten", ledigHemma:"Ledig hemma"};
 
 function render(){
@@ -681,6 +718,8 @@ function render(){
     ? "Avresa senast 12.00 ger heldag, hemkomst från 19.00 ger heldag. Övriga tider ger halvdag."
     : "Används för att kontrollera t.ex. en lönemånad mitt i en lång förrättning. Tremånaders- och 90-dagarsgränserna räknas från förrättningens start.";
 
+  last = {res, sum};
+  $("exportPdf").disabled = $("exportXlsx").disabled = !rows.length;
   renderMilestones(res);
   renderBreakdown(res, sum);
   renderDays(res);
@@ -700,7 +739,7 @@ function renderMilestones(res){
     + `<p class="hint" style="margin-top:4px">Grått = efter vald period. Hemmahelger bryter inte förrättningen.</p>`;
 }
 
-function renderBreakdown(res, sum){
+function breakdownLines(res){
   const rows = res.rows, bygg = res.bygg;
   const g = (label, filter) => { const rs = rows.filter(filter); return {label, n:rs.length, paid:rs.reduce((a,r)=>a+r.paid,0), free:rs.reduce((a,r)=>a+r.taxFree,0), tax:rs.reduce((a,r)=>a+r.taxable,0)}; };
   const lines = [
@@ -713,6 +752,10 @@ function renderBreakdown(res, sum){
   if(bygg){
     [35,20].forEach(p => { const rs = rows.filter(r=>r.tillPct===p && r.till); if(rs.length){ const v = rs.reduce((a,r)=>a+r.till,0); out.push({label:`Förrättningstillägg ${p} %`, n:rs.length, paid:v, free:0, tax:v}); } });
   }
+  return out;
+}
+function renderBreakdown(res, sum){
+  const rows = res.rows, out = breakdownLines(res);
   const tot = out.reduce((a,l)=>({paid:a.paid+l.paid, free:a.free+l.free, tax:a.tax+l.tax}),{paid:0,free:0,tax:0});
   let html = `<thead><tr><th>Post</th><th class="r">Dagar</th><th class="r">Utbetalt</th><th class="r">Skattefritt</th><th class="r">Skattepliktigt</th></tr></thead><tbody>`;
   html += out.map(l => `<tr><td>${l.label}</td><td class="r num">${l.n}</td><td class="money">${kr(l.paid)}</td><td class="money c-free">${kr(l.free)}</td><td class="money c-tax">${kr(l.tax)}</td></tr>`).join("");
@@ -871,6 +914,159 @@ $("days").addEventListener("change", e => {
   render();
 });
 $("resetDays").addEventListener("click", () => { st.over = {}; render(); });
+
+/* ---------- Export: PDF (utskrift) och Excel ---------- */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function inputSummary(){
+  const bygg = st.regel==="bygg", out = [];
+  out.push(["Regelverk", bygg ? "Byggavtalet 2025–2027" : "Skatteverket standard"]);
+  if(st.omfang==="hela"){
+    out.push(["Avresa", `${st.avresa} ${st.avresaTid}`]);
+    out.push(["Hemkomst", `${st.hemkomst} ${st.hemTid}`]);
+  } else {
+    out.push(["Förrättningen påbörjades", st.forrStart]);
+    out.push(["Period", `${st.periodFran} – ${st.periodTill}`]);
+    out.push(["Avslutas med hemresa", st.slutarHemresa ? `Ja, kl. ${st.slutTid}` : "Nej"]);
+  }
+  out.push(["Boende", st.logi==="egen" ? "Ordnar logi själv" : "Arbetsgivaren står för logi"]);
+  if(bygg && st.logi==="egen") out.push(["Förrättningstillägg", st.tillaggRatt ? "Ja" : "Nej"]);
+  out.push(["Helger", st.helg==="hemma" ? "Hemmahelg" : "Stannar på orten"]);
+  if(st.helg==="hemma"){
+    out.push(["Hemma före kl. 19 inför helgen", st.fredagFore19 ? "Ja" : "Nej"]);
+    out.push(["Återresa före kl. 12 efter helgen", st.mandagFore12 ? "Ja" : "Nej"]);
+  }
+  const meals = bygg && st.friKost ? "Fri kost enligt överenskommelse (−55 %)" : ([st.mF&&"frukost", st.mL&&"lunch", st.mM&&"middag"].filter(Boolean).join(", ") || "Inga");
+  out.push(["Fria måltider", meals]);
+  if(st.mF && !(bygg && st.friKost)) out.push(["Frukost ingår i hotellpriset", st.frukostIngar ? "Ja" : "Nej"]);
+  if(!bygg) out.push(["Arbetsgivarens belopp", st.skvBelopp==="norm" ? "Skatteverkets normalbelopp" : `Egna: heldag ${st.egetHel} kr, halvdag ${st.egetHalv} kr, natt ${st.egetNatt} kr`]);
+  if(bygg) out.push(["Förlängd rätt efter två år", st.forlangd ? "Ja" : "Nej"]);
+  const n = Object.keys(st.over).length;
+  if(n) out.push(["Manuellt ändrade dagar", String(n)]);
+  return out;
+}
+function totals(){
+  const s = last.sum;
+  return {cash:s.paid+s.till, free:s.free, tax:s.tax+s.till, till:s.till, kost:s.kost};
+}
+const sumLines = lines => lines.reduce((a,l)=>({paid:a.paid+l.paid, free:a.free+l.free, tax:a.tax+l.tax}),{paid:0,free:0,tax:0});
+const kindLabel = k => k==="hel" ? "Heldag" : k==="halv" ? "Halvdag" : "–";
+const nowStamp = () => { const n = new Date(); const p = x => String(x).padStart(2,"0"); return `${n.getFullYear()}-${p(n.getMonth()+1)}-${p(n.getDate())} ${p(n.getHours())}:${p(n.getMinutes())}`; };
+function fileBase(){
+  const r = last.res.rows; return `traktamente_${st.regel==="bygg"?"byggavtalet":"skatteverket"}_${r[0].s}_${r[r.length-1].s}`;
+}
+
+function buildPrint(){
+  const {res} = last, t = totals(), bygg = res.bygg, lines = breakdownLines(res), tot = sumLines(lines);
+  let h = `<div class="pr-head"><h1>Traktamenteskollen</h1><div>Beräknad ${nowStamp()}<br>traktamenteskollen.vercel.app</div></div>`;
+  h += `<h2>Förutsättningar</h2><div class="pr-grid">${inputSummary().map(([k,v])=>`<div><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join("")}</div>`;
+  h += `<h2>Summering</h2><div class="pr-totals">
+    <div><small>Utbetalt totalt</small><b>${kr(t.cash)}</b></div>
+    <div><small>Skattefritt</small><b class="c-free">${kr(t.free)}</b></div>
+    <div><small>Skattepliktigt</small><b class="c-tax">${kr(t.tax)}</b>${t.till?`<small style="text-transform:none;letter-spacing:0">varav tillägg ${kr(t.till)}</small>`:""}</div>
+    <div><small>Kostförmån</small><b class="c-ben">${kr(t.kost)}</b></div></div>`;
+  h += `<h2>Uppdelning</h2><table><thead><tr><th>Post</th><th class="r">Dagar</th><th class="r">Utbetalt</th><th class="r">Skattefritt</th><th class="r">Skattepliktigt</th></tr></thead><tbody>`
+    + lines.map(l=>`<tr><td>${l.label}</td><td class="r">${l.n}</td><td class="money">${kr(l.paid)}</td><td class="money">${kr(l.free)}</td><td class="money">${kr(l.tax)}</td></tr>`).join("")
+    + `</tbody><tfoot><tr><td>Summa kontant</td><td></td><td class="money">${kr(tot.paid)}</td><td class="money">${kr(tot.free)}</td><td class="money">${kr(tot.tax)}</td></tr></tfoot></table>`;
+  h += `<h2>Dag för dag</h2><table><thead><tr><th>Datum</th><th>Dagtyp</th><th>Grund</th><th>Mat</th>${bygg?"<th>Arb.</th>":""}<th class="r">Utbetalt</th><th class="r">Skattefritt</th><th class="r">Skattepl.</th>${bygg?'<th class="r">Tillägg</th>':""}</tr></thead><tbody>`
+    + res.rows.map(r=>{
+        const grund = [kindLabel(r.kind), r.night?"+ natt":"", r.per===2?"70 %":r.per===3?"50 %":""].filter(Boolean).join(" ");
+        const mat = [r.mf&&"F", r.ml&&"L", r.mm&&"M"].filter(Boolean).join(" ") || "–";
+        return `<tr><td>${fmtDay(r.t)}</td><td>${TYPE_LABEL[r.typ]}</td><td>${grund}</td><td>${mat}</td>${bygg?`<td>${r.worked?"Ja":"–"}</td>`:""}<td class="money">${kr(r.paid)}</td><td class="money">${kr(r.taxFree)}</td><td class="money">${kr(r.taxable)}</td>${bygg?`<td class="money">${r.till?kr(r.till):"–"}</td>`:""}</tr>`
+          + (r.why ? `<tr class="pr-why"><td></td><td class="wrap" colspan="${bygg?8:6}">${esc(r.why)}</td></tr>` : "");
+      }).join("") + `</tbody></table>`;
+  h += `<p class="pr-note">Belopp enligt Skatteverket (belopp och procent ${YEARS[YEARS.length-1]})${bygg?" och Byggavtalet 2025–2027 §6":""}. Kontrollverktyg som inte ersätter lönesystemets beräkning.</p>`;
+  $("printReport").innerHTML = h;
+}
+$("exportPdf").addEventListener("click", () => {
+  if(!last || !last.res.rows.length) return;
+  buildPrint();
+  // Dokumenttiteln blir förslag på filnamn i "Spara som PDF"
+  const prev = document.title; document.title = fileBase();
+  const restore = () => { document.title = prev; window.removeEventListener("afterprint", restore); };
+  window.addEventListener("afterprint", restore);
+  window.print();
+  setTimeout(restore, 3000);
+});
+window.addEventListener("beforeprint", () => { if(last && last.res.rows.length) buildPrint(); });
+
+let xlsxLoading = null;
+function loadXlsx(){
+  if(window.XLSX) return Promise.resolve(window.XLSX);
+  if(!xlsxLoading) xlsxLoading = new Promise((ok, fail) => {
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    s.onload = () => ok(window.XLSX);
+    s.onerror = () => { xlsxLoading = null; fail(new Error("load")); };
+    document.head.appendChild(s);
+  });
+  return xlsxLoading;
+}
+function buildWorkbook(XLSX){
+  const {res} = last, t = totals(), bygg = res.bygg, lines = breakdownLines(res), tot = sumLines(lines);
+  const KR = '#,##0.00 "kr"';
+  const fmtCols = (ws, cols, from, to, z) => { for(let R=from; R<=to; R++) for(const C of cols){ const c = ws[XLSX.utils.encode_cell({r:R,c:C})]; if(c && typeof c.v==="number") c.z = z; } };
+
+  // Blad 1: Sammanfattning
+  const a = [["Traktamenteskollen"], [`Beräknad ${nowStamp()}`], [], ["Förutsättningar"], ...inputSummary(), []];
+  const sumStart = a.length;
+  a.push(["Summering", "Belopp"], ["Utbetalt totalt", r2(t.cash)], ["Skattefritt", r2(t.free)], ["Skattepliktigt", r2(t.tax)]);
+  if(t.till) a.push(["  varav förrättningstillägg", r2(t.till)]);
+  a.push(["Kostförmån (skattepliktig, betalas inte ut)", r2(t.kost)]);
+  const sumEnd = a.length-1;
+  a.push([]);
+  const brStart = a.length;
+  a.push(["Uppdelning", "Dagar", "Utbetalt", "Skattefritt", "Skattepliktigt"]);
+  lines.forEach(l => a.push([l.label, l.n, r2(l.paid), r2(l.free), r2(l.tax)]));
+  a.push(["Summa kontant", "", r2(tot.paid), r2(tot.free), r2(tot.tax)]);
+  const ws1 = XLSX.utils.aoa_to_sheet(a);
+  fmtCols(ws1, [1], sumStart, sumEnd, KR);
+  fmtCols(ws1, [2,3,4], brStart, a.length-1, KR);
+  ws1["!cols"] = [{wch:44},{wch:40},{wch:14},{wch:14},{wch:14}];
+
+  // Blad 2: Dag för dag
+  const head = ["Datum","Veckodag","Dagtyp","Skattefri grund","Nattraktamente","Nivå","Frukost","Lunch","Middag","Måltidsavdrag",
+    ...(bygg?["Arbete"]:[]), "Utbetalt","Skattefritt","Skattepliktigt", ...(bygg?["Förrättningstillägg","Tillägg %"]:[]), "Kostförmån","Förklaring"];
+  const d = [head, ...res.rows.map(r => [
+    r.s, WD[new Date(r.t).getUTCDay()], TYPE_LABEL[r.typ], kindLabel(r.kind), r.night?"Ja":"Nej",
+    r.kind==="ingen" ? "–" : (r.per===1?"100 %":r.per===2?"70 %":"50 %"),
+    r.mf?"Ja":"", r.ml?"Ja":"", r.mm?"Ja":"", r.red,
+    ...(bygg?[r.worked?"Ja":""]:[]),
+    r2(r.paid), r2(r.taxFree), r2(r.taxable),
+    ...(bygg?[r2(r.till), r.tillPct ? r.tillPct/100 : ""]:[]),
+    r2(r.kost), r.why||""
+  ])];
+  const n = d.length; // rader inkl. rubrik
+  const sumRow = head.map(() => ""); sumRow[0] = "Summa"; d.push(sumRow);
+  const ws2 = XLSX.utils.aoa_to_sheet(d);
+  const col = name => head.indexOf(name);
+  const moneyCols = ["Måltidsavdrag","Utbetalt","Skattefritt","Skattepliktigt","Förrättningstillägg","Kostförmån"].map(col).filter(c => c>=0);
+  fmtCols(ws2, moneyCols, 1, n-1, KR);
+  moneyCols.forEach(c => {
+    const L = XLSX.utils.encode_col(c), v = r2(d.slice(1, n).reduce((a,row) => a + (Number(row[c])||0), 0));
+    ws2[XLSX.utils.encode_cell({r:n,c})] = {t:"n", v, f:`SUM(${L}2:${L}${n})`, z:KR};
+  });
+  if(bygg) fmtCols(ws2, [col("Tillägg %")], 1, n-1, "0%");
+  ws2["!cols"] = head.map(hd => ({wch: hd==="Förklaring" ? 60 : Math.max(10, hd.length+2)}));
+  ws2["!autofilter"] = {ref: XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:n-1,c:head.length-1}})};
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws1, "Sammanfattning");
+  XLSX.utils.book_append_sheet(wb, ws2, "Dag för dag");
+  return wb;
+}
+$("exportXlsx").addEventListener("click", async () => {
+  if(!last || !last.res.rows.length) return;
+  const btn = $("exportXlsx"), label = "Exportera till Excel";
+  btn.disabled = true; btn.textContent = "Skapar fil …";
+  try {
+    const XLSX = await loadXlsx();
+    XLSX.writeFile(buildWorkbook(XLSX), fileBase()+".xlsx");
+    btn.textContent = "Klar";
+  } catch(e){
+    btn.textContent = "Kunde inte skapa filen";
+  }
+  setTimeout(() => { btn.textContent = label; btn.disabled = !(last && last.res.rows.length); }, 1800);
+});
 
 fill();
 render();
