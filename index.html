@@ -197,6 +197,7 @@ details[open] > summary::before{transform:rotate(45deg)}
 .faq details{border-top:1px solid var(--line);padding-top:10px}
 .faq details > summary h3{font-size:15px;font-weight:600}
 .faq details p{margin:8px 0 2px;max-width:70ch;color:var(--ink)}
+.head-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .btn{font:600 13px var(--f-body);border:1px solid var(--line);background:var(--surface-2);color:var(--ink);padding:7px 12px;border-radius:8px;cursor:pointer}
 .btn:hover{border-color:var(--accent)}
 .rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
@@ -230,9 +231,12 @@ details[open] > summary::before{transform:rotate(45deg)}
       <h1>Traktamenteskollen</h1>
       <p>Räkna fram och kontrollera traktamente 2026 enligt Skatteverket eller Byggavtalet. Du ser direkt vad som är skattefritt och vad som blir skattepliktig lön.</p>
     </div>
+    <div class="head-actions">
     <div class="seg" role="group" aria-label="Regelverk">
       <button type="button" id="rv-skv" data-regel="skv" aria-pressed="true">Skatteverket standard</button>
       <button type="button" id="rv-bygg" data-regel="bygg" aria-pressed="false">Byggavtalet</button>
+    </div>
+    <button type="button" class="btn" id="resetAll" title="Rensa allt du fyllt i och visa exemplet igen">Återställ</button>
     </div>
   </header>
 
@@ -462,12 +466,18 @@ function todayMonday(){
   const n = new Date(); const t = Date.UTC(n.getFullYear(), n.getMonth(), n.getDate());
   const w = dow(t); return S(t + ((8 - w) % 7 || 7) * DAY);
 }
-function defaults(){
+// Exempelresa: Skatteverket 5 dagar (mån–fre), Byggavtalet 30 dagar
+const DEFAULT_LEN = {skv:5, bygg:30};
+function defaultDates(regel){
   const start = todayMonday();
-  const end = S(D(start) + 39*DAY); // fredag vecka 6
+  return {avresa:start, avresaTid:"06:30", hemkomst:S(D(start) + (DEFAULT_LEN[regel]-1)*DAY), hemTid:"16:00"};
+}
+function defaults(regel){
+  regel = regel || "skv";
+  const start = todayMonday();
   return {
-    regel:"skv", omfang:"hela",
-    avresa:start, avresaTid:"06:30", hemkomst:end, hemTid:"16:00",
+    regel, omfang:"hela", datesEdited:false,
+    ...defaultDates(regel),
     forrStart:addMonths(start,-4), periodFran:start, periodTill:S(D(start)+27*DAY), slutarHemresa:false, slutTid:"16:00",
     logi:"egen", tillaggRatt:true,
     helg:"hemma", fredagFore19:true, mandagFore12:true,
@@ -478,7 +488,10 @@ function defaults(){
   };
 }
 let st = defaults();
-try { const saved = JSON.parse(localStorage.getItem("traktamenteskollen.v1")||"null"); if(saved && typeof saved==="object") st = Object.assign(defaults(), saved, {over:saved.over||{}, regel:"skv"}); } catch(e){}
+try { const saved = JSON.parse(localStorage.getItem("traktamenteskollen.v1")||"null"); if(saved && typeof saved==="object") {
+  st = Object.assign(defaults(), saved, {over:saved.over||{}, regel:"skv"});
+  if(!st.datesEdited) Object.assign(st, defaultDates("skv"));
+} } catch(e){}
 const save = () => { try { localStorage.setItem("traktamenteskollen.v1", JSON.stringify(st)); } catch(e){} };
 
 /* ---------- Måltidsreduktion (Skatteverket, inrikes) ---------- */
@@ -795,13 +808,13 @@ function maskInput(el, kind){
     }
     const v = el.value, good = ok(v);
     el.setAttribute("aria-invalid", String(!!v && !good && v.length===el.maxLength));
-    if(good){ st[el.id] = v; render(); }
+    if(good){ st[el.id] = v; st.datesEdited = true; render(); }
   });
   el.addEventListener("blur", () => {
     let v = el.value;
     if(!isDate && /^\d{1,2}$/.test(v)) v = v.padStart(2,"0")+":00";
     if(!isDate && /^\d{1,2}:\d$/.test(v)) v = v.replace(/^(\d{1,2}):(\d)$/, (m,h,mm)=>h.padStart(2,"0")+":"+mm+"0");
-    if(ok(v)){ el.value = v; if(st[el.id]!==v){ st[el.id] = v; render(); } }
+    if(ok(v)){ el.value = v; if(st[el.id]!==v){ st[el.id] = v; st.datesEdited = true; render(); } }
     else el.value = st[el.id] || "";
     el.setAttribute("aria-invalid","false");
   });
@@ -816,7 +829,7 @@ function maskInput(el, kind){
       nat.value = validDate(el.value) ? el.value : (st[el.id] || "");
       try { nat.showPicker(); } catch(err){ el.focus(); el.select(); }
     });
-    nat.addEventListener("change", () => { if(validDate(nat.value)){ el.value = nat.value; st[el.id] = nat.value; el.setAttribute("aria-invalid","false"); render(); } });
+    nat.addEventListener("change", () => { if(validDate(nat.value)){ el.value = nat.value; st[el.id] = nat.value; st.datesEdited = true; el.setAttribute("aria-invalid","false"); render(); } });
   }
 }
 document.querySelectorAll("input.dt").forEach(el => maskInput(el,"dt"));
@@ -835,7 +848,19 @@ document.querySelectorAll('input[name="skvBelopp"]').forEach(el => el.addEventLi
   if(st.skvBelopp==="eget" && !st.egetHel){ const R = RATES[rateYear(new Date().getFullYear())]; st.egetHel = R.hel; st.egetHalv = R.halv; st.egetNatt = R.natt; fill(); }
   render();
 }));
-document.querySelectorAll("[data-regel]").forEach(b => b.addEventListener("click", () => { st.regel = b.dataset.regel; render(); }));
+document.querySelectorAll("[data-regel]").forEach(b => b.addEventListener("click", () => {
+  st.regel = b.dataset.regel;
+  // Byt exempelresa om användaren inte själv ändrat datumen
+  if(!st.datesEdited){ Object.assign(st, defaultDates(st.regel)); fill(); }
+  render();
+}));
+$("resetAll").addEventListener("click", () => {
+  try { localStorage.removeItem("traktamenteskollen.v1"); } catch(e){}
+  st = defaults(st.regel);
+  document.querySelectorAll("input.dt,input.tm").forEach(el => el.setAttribute("aria-invalid","false"));
+  fill(); render();
+  const b = $("resetAll"); b.textContent = "Återställt"; setTimeout(() => { b.textContent = "Återställ"; }, 1500);
+});
 document.querySelectorAll("[data-omfang]").forEach(b => b.addEventListener("click", () => { st.omfang = b.dataset.omfang; render(); }));
 $("form").addEventListener("submit", e => e.preventDefault());
 
