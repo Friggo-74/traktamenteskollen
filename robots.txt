@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://traktamenteskollen.vercel.app/sitemap.xml
+Sitemap: https://traktamenteskollen.se/sitemap.xml

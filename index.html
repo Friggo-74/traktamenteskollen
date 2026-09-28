@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Traktamenteskollen – räkna traktamente 2026 enligt Skatteverket och Byggavtalet</title>
 <meta name="description" content="Gratis traktamentskalkylator för 2026. Räkna ut skattefritt och skattepliktigt traktamente enligt Skatteverket eller Byggavtalet, med måltidsavdrag, långa förrättningar samt Byggavtalets förrättningstillägg och hemmahelg.">
-<link rel="canonical" href="https://traktamenteskollen.vercel.app/">
+<link rel="canonical" href="https://traktamenteskollen.se/">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#1c4f7a">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="sv_SE">
 <meta property="og:site_name" content="Traktamenteskollen">
-<meta property="og:url" content="https://traktamenteskollen.vercel.app/">
+<meta property="og:url" content="https://traktamenteskollen.se/">
 <meta property="og:title" content="Traktamenteskollen – räkna traktamente 2026">
 <meta property="og:description" content="Se direkt vad som är skattefritt och skattepliktigt. Skatteverkets normalbelopp och Byggavtalet med förrättningstillägg och hemmahelg.">
-<meta property="og:image" content="https://traktamenteskollen.vercel.app/og.png">
+<meta property="og:image" content="https://traktamenteskollen.se/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Traktamenteskollen: räkna ut skattefritt och skattepliktigt traktamente 2026">
@@ -29,7 +29,7 @@
     {
       "@type": "WebApplication",
       "name": "Traktamenteskollen",
-      "url": "https://traktamenteskollen.vercel.app/",
+      "url": "https://traktamenteskollen.se/",
       "applicationCategory": "FinanceApplication",
       "operatingSystem": "Alla (webbläsare)",
       "inLanguage": "sv-SE",
@@ -965,7 +965,7 @@ function fileBase(){
 
 function buildPrint(){
   const {res} = last, t = totals(), bygg = res.bygg, lines = breakdownLines(res), tot = sumLines(lines);
-  let h = `<div class="pr-head"><img src="logo-light.png" alt="Traktamenteskollen" style="height:40px;width:auto"><div>Beräknad ${nowStamp()}<br>traktamenteskollen.vercel.app</div></div>`;
+  let h = `<div class="pr-head"><img src="logo-light.png" alt="Traktamenteskollen" style="height:40px;width:auto"><div>Beräknad ${nowStamp()}<br>traktamenteskollen.se</div></div>`;
   h += `<h2>Förutsättningar</h2><div class="pr-grid">${inputSummary().map(([k,v])=>`<div><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join("")}</div>`;
   h += `<h2>Summering</h2><div class="pr-totals">
     <div><small>Utbetalt totalt</small><b>${kr(t.cash)}</b></div>
