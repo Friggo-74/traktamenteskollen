@@ -3,8 +3,56 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Traktamenteskollen</title>
-<meta name="description" content="Verifiera traktamente enligt Byggavtalet eller Skatteverket – skattefri och skattepliktig del, förrättningstillägg, hemmahelg och långa förrättningar.">
+<title>Traktamenteskollen – räkna traktamente 2026 enligt Skatteverket och Byggavtalet</title>
+<meta name="description" content="Gratis traktamentskalkylator för 2026. Räkna ut skattefritt och skattepliktigt traktamente enligt Skatteverket eller Byggavtalet, med förrättningstillägg, hemmahelg, måltidsavdrag och långa förrättningar.">
+<link rel="canonical" href="https://traktamenteskollen.vercel.app/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#1c4f7a">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="sv_SE">
+<meta property="og:site_name" content="Traktamenteskollen">
+<meta property="og:url" content="https://traktamenteskollen.vercel.app/">
+<meta property="og:title" content="Traktamenteskollen – räkna traktamente 2026">
+<meta property="og:description" content="Se direkt vad som är skattefritt och skattepliktigt. Skatteverkets normalbelopp och Byggavtalet med förrättningstillägg och hemmahelg.">
+<meta property="og:image" content="https://traktamenteskollen.vercel.app/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Traktamenteskollen: räkna ut skattefritt och skattepliktigt traktamente 2026">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "Traktamenteskollen",
+      "url": "https://traktamenteskollen.vercel.app/",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Alla (webbläsare)",
+      "inLanguage": "sv-SE",
+      "description": "Kalkylator för traktamente 2026 enligt Skatteverket och Byggavtalet. Visar skattefri och skattepliktig del, förrättningstillägg, hemmahelg och måltidsavdrag.",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "SEK" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        { "@type": "Question", "name": "Hur mycket är skattefritt traktamente 2026?",
+          "acceptedAnswer": { "@type": "Answer", "text": "För tjänsteresor inom Sverige 2026 är det skattefria traktamentet 300 kr för hel dag, 150 kr för halv dag och 150 kr i nattraktamente om du ordnar logi själv. Efter tre månader på samma ort sänks heldagen till 210 kr och efter två år till 150 kr." } },
+        { "@type": "Question", "name": "Hur mycket är traktamentet enligt Byggavtalet 2026?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Byggavtalet betalar 450 kr per dag inklusive kost och logi från 1 januari 2026 (435 kr under 2025). Beloppet minskas med 35 procent om arbetsgivaren står för logi och med 55 procent vid fri kost." } },
+        { "@type": "Question", "name": "Vad är förrättningstillägg?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Förrättningstillägg är en skattepliktig ersättning i Byggavtalet. Den betalas med 35 procent av traktamentet per arbetsdag de första 90 kalenderdagarna och därefter med 20 procent, när du ordnar logi själv. År 2026 motsvarar det 157,50 kr respektive 90 kr per dag." } },
+        { "@type": "Question", "name": "Är traktamente skattefritt vid hemmahelg?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Nej. Byggavtalet ger upp till två traktamenten för mellanliggande lediga dagar, men om du reser hem över helgen är de dagarna inte en del av tjänsteresan och ersättningen blir skattepliktig. Dagen du reser hem ger dessutom inget skattefritt nattraktamente." } },
+        { "@type": "Question", "name": "Varför blir en del av traktamentet skattepliktigt på hemresedagen?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Byggavtalets 450 kr innehåller en logidel. På hemresedagen övernattar du inte på orten, så nattraktamentet på 150 kr får inte vara skattefritt. Den delen beskattas som lön." } }
+      ]
+    }
+  ]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -146,6 +194,9 @@ details > summary{cursor:pointer;font-family:var(--f-display);font-weight:700;fo
 details > summary::-webkit-details-marker{display:none}
 details > summary::before{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s}
 details[open] > summary::before{transform:rotate(45deg)}
+.faq details{border-top:1px solid var(--line);padding-top:10px}
+.faq details > summary h3{font-size:15px;font-weight:600}
+.faq details p{margin:8px 0 2px;max-width:70ch;color:var(--ink)}
 .btn{font:600 13px var(--f-body);border:1px solid var(--line);background:var(--surface-2);color:var(--ink);padding:7px 12px;border-radius:8px;cursor:pointer}
 .btn:hover{border-color:var(--accent)}
 .rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
@@ -177,7 +228,7 @@ details[open] > summary::before{transform:rotate(45deg)}
   <header class="top">
     <div>
       <h1>Traktamenteskollen</h1>
-      <p>Räkna fram och kontrollera traktamente. Du ser direkt vad som är skattefritt och vad som blir skattepliktig lön.</p>
+      <p>Räkna fram och kontrollera traktamente 2026 enligt Skatteverket eller Byggavtalet. Du ser direkt vad som är skattefritt och vad som blir skattepliktig lön.</p>
     </div>
     <div class="seg" role="group" aria-label="Regelverk">
       <button type="button" id="rv-skv" data-regel="skv" aria-pressed="true">Skatteverket standard</button>
@@ -330,6 +381,32 @@ details[open] > summary::before{transform:rotate(45deg)}
           </div>
           <div class="tscroll" style="max-height:640px;overflow-y:auto"><table class="days" id="days"></table></div>
         </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="section" id="fragor">
+    <div class="panel faq">
+      <h2>Vanliga frågor om traktamente</h2>
+      <details>
+        <summary><h3>Hur mycket är skattefritt traktamente 2026?</h3></summary>
+        <p>För tjänsteresor inom Sverige 2026 är det skattefria traktamentet 300 kr för hel dag, 150 kr för halv dag och 150 kr i nattraktamente om du ordnar logi själv. Efter tre månader på samma ort sänks heldagen till 210 kr och efter två år till 150 kr. Nattraktamentet sänks inte.</p>
+      </details>
+      <details>
+        <summary><h3>Hur mycket är traktamentet enligt Byggavtalet 2026?</h3></summary>
+        <p>Byggavtalet betalar 450 kr per dag inklusive kost och logi från 1 januari 2026 (435 kr under 2025). Beloppet minskas med 35 procent om arbetsgivaren står för logi och med 55 procent vid fri kost. Reser du efter kl. 12 första dagen eller kommer hem före kl. 19 sista dagen blir det halvt traktamente.</p>
+      </details>
+      <details>
+        <summary><h3>Vad är förrättningstillägg?</h3></summary>
+        <p>Förrättningstillägg är en skattepliktig ersättning i Byggavtalet. Den betalas med 35 procent av traktamentet per arbetsdag de första 90 kalenderdagarna och därefter med 20 procent, när du ordnar logi själv. År 2026 motsvarar det 157,50 kr respektive 90 kr per dag.</p>
+      </details>
+      <details>
+        <summary><h3>Är traktamente skattefritt vid hemmahelg?</h3></summary>
+        <p>Nej. Byggavtalet ger upp till två traktamenten för mellanliggande lediga dagar, men om du reser hem över helgen är de dagarna inte en del av tjänsteresan och ersättningen blir skattepliktig. Dagen du reser hem ger dessutom inget skattefritt nattraktamente.</p>
+      </details>
+      <details>
+        <summary><h3>Varför blir en del av traktamentet skattepliktigt på hemresedagen?</h3></summary>
+        <p>Byggavtalets 450 kr innehåller en logidel. På hemresedagen övernattar du inte på orten, så nattraktamentet på 150 kr får inte vara skattefritt. Den delen beskattas som lön.</p>
       </details>
     </div>
   </section>
