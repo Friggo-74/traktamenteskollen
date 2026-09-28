@@ -67,10 +67,17 @@ header.top p{margin:4px 0 0;color:var(--muted);max-width:60ch}
 .field{display:grid;gap:5px}
 .field > span{font-size:13px;font-weight:500;color:var(--muted)}
 .row{display:flex;gap:8px;flex-wrap:wrap}
-.row > input[type=date]{flex:1 1 150px}
-.row > input[type=time]{flex:0 1 110px}
-input[type=date],input[type=time],input[type=number],select{font:15px var(--f-body);color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0;width:100%}
-.row > input{width:auto}
+input.dt,input.tm,input[type=number],select{font:15px var(--f-body);color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0;width:100%}
+input.dt,input.tm{font-family:var(--f-mono);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+input.dt::placeholder,input.tm::placeholder{color:var(--muted);opacity:.7}
+input[aria-invalid="true"]{border-color:var(--err);background:var(--err-soft)}
+.dpick{position:relative;display:flex;flex:1 1 160px;min-width:0}
+.dpick input.dt{padding-right:40px}
+.calbtn{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:32px;height:30px;display:grid;place-items:center;border:0;border-radius:6px;background:transparent;color:var(--muted);cursor:pointer}
+.calbtn:hover{color:var(--accent);background:var(--accent-soft)}
+.calbtn svg{width:18px;height:18px}
+.dpick input[type=date]{position:absolute;right:4px;bottom:0;width:32px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
+.row > input.tm{flex:0 1 96px;width:auto}
 .check{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
 .check input{margin-top:3px;accent-color:var(--accent);width:16px;height:16px;flex:none}
 .check b{font-weight:600}
@@ -190,24 +197,24 @@ details[open] > summary::before{transform:rotate(45deg)}
 
         <div id="p-hela" class="grid2">
           <label class="field"><span>Avresa hemifrån</span>
-            <div class="row"><input type="date" id="avresa" required><input type="time" id="avresaTid" step="300" required></div>
+            <div class="row"><input type="text" class="dt" id="avresa" required><input type="text" class="tm" id="avresaTid" required></div>
           </label>
           <label class="field"><span>Hemkomst</span>
-            <div class="row"><input type="date" id="hemkomst" required><input type="time" id="hemTid" step="300" required></div>
+            <div class="row"><input type="text" class="dt" id="hemkomst" required><input type="text" class="tm" id="hemTid" required></div>
           </label>
         </div>
 
         <div id="p-del" class="grid2" hidden>
           <label class="field"><span>Förrättningen påbörjades</span>
-            <input type="date" id="forrStart">
+            <div class="row"><input type="text" class="dt" id="forrStart"></div>
           </label>
           <div></div>
-          <label class="field"><span>Periodens första dag</span><input type="date" id="periodFran"></label>
-          <label class="field"><span>Periodens sista dag</span><input type="date" id="periodTill"></label>
+          <label class="field"><span>Periodens första dag</span><div class="row"><input type="text" class="dt" id="periodFran"></div></label>
+          <label class="field"><span>Periodens sista dag</span><div class="row"><input type="text" class="dt" id="periodTill"></div></label>
           <label class="check" style="grid-column:1/-1"><input type="checkbox" id="slutarHemresa">
             <span><b>Förrättningen avslutas periodens sista dag</b><small>Sista dagen räknas då som hemresedag.</small></span>
           </label>
-          <label class="field" id="f-slutTid" hidden><span>Hemkomst klockan</span><input type="time" id="slutTid" step="300"></label>
+          <label class="field" id="f-slutTid" hidden><span>Hemkomst klockan</span><div class="row"><input type="text" class="tm" id="slutTid"></div></label>
         </div>
         <p class="hint" id="hint-period"></p>
       </section>
@@ -361,11 +368,12 @@ const S = t => new Date(t).toISOString().slice(0,10);
 const addMonths = (s,n) => { const [y,m,d] = s.split("-").map(Number); return S(Date.UTC(y,m-1+n,d)); };
 const dow = t => new Date(t).getUTCDay();
 const mins = hm => { if(!hm) return 0; const [h,m] = hm.split(":").map(Number); return h*60+(m||0); };
-const validDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s||"");
+const validDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s||"") && S(D(s))===s;
 const WD = ["sön","mån","tis","ons","tor","fre","lör"];
 const MO = ["jan","feb","mar","apr","maj","jun","jul","aug","sep","okt","nov","dec"];
-const fmtDay = t => { const d = new Date(t); return WD[d.getUTCDay()]+" "+d.getUTCDate()+" "+MO[d.getUTCMonth()]; };
-const fmtDate = s => { const d = new Date(D(s)); return d.getUTCDate()+" "+MO[d.getUTCMonth()]+" "+d.getUTCFullYear(); };
+const fmtDay = t => WD[new Date(t).getUTCDay()]+" "+S(t);
+const fmtDate = s => s;
+const validTime = s => /^([01]\d|2[0-3]):[0-5]\d$/.test(s||"");
 
 const nf = new Intl.NumberFormat("sv-SE",{minimumFractionDigits:2,maximumFractionDigits:2});
 const nf0 = new Intl.NumberFormat("sv-SE",{maximumFractionDigits:0});
@@ -694,7 +702,49 @@ function fill(){
   $("helg-"+st.helg).checked = true;
   $("sb-"+st.skvBelopp).checked = true;
 }
-bindIds.forEach(id => $(id).addEventListener("input", e => { st[id] = e.target.value; render(); }));
+const CAL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
+// Datum ÅÅÅÅ-MM-DD och tid TT:MM (24 h) oberoende av webbläsarens språk
+function maskInput(el, kind){
+  const isDate = kind==="dt";
+  el.inputMode = "numeric"; el.autocomplete = "off"; el.spellcheck = false;
+  el.maxLength = isDate ? 10 : 5;
+  el.placeholder = isDate ? "ÅÅÅÅ-MM-DD" : "TT:MM";
+  const ok = v => isDate ? validDate(v) : validTime(v);
+  el.addEventListener("input", e => {
+    if(!(e.inputType||"").startsWith("delete")){
+      let d = el.value.replace(/\D/g,"");
+      if(isDate){ d = d.slice(0,8); el.value = d.length>6 ? d.slice(0,4)+"-"+d.slice(4,6)+"-"+d.slice(6) : d.length>4 ? d.slice(0,4)+"-"+d.slice(4) : d; }
+      else { d = d.slice(0,4); if(d.length===3 && Number(d[0])>2) d = "0"+d; el.value = d.length>2 ? d.slice(0,2)+":"+d.slice(2) : d; }
+    }
+    const v = el.value, good = ok(v);
+    el.setAttribute("aria-invalid", String(!!v && !good && v.length===el.maxLength));
+    if(good){ st[el.id] = v; render(); }
+  });
+  el.addEventListener("blur", () => {
+    let v = el.value;
+    if(!isDate && /^\d{1,2}$/.test(v)) v = v.padStart(2,"0")+":00";
+    if(!isDate && /^\d{1,2}:\d$/.test(v)) v = v.replace(/^(\d{1,2}):(\d)$/, (m,h,mm)=>h.padStart(2,"0")+":"+mm+"0");
+    if(ok(v)){ el.value = v; if(st[el.id]!==v){ st[el.id] = v; render(); } }
+    else el.value = st[el.id] || "";
+    el.setAttribute("aria-invalid","false");
+  });
+  if(isDate){
+    const wrap = document.createElement("span"); wrap.className = "dpick";
+    el.parentNode.insertBefore(wrap, el); wrap.appendChild(el);
+    const nat = document.createElement("input"); nat.type = "date"; nat.tabIndex = -1; nat.setAttribute("aria-hidden","true");
+    const btn = document.createElement("button"); btn.type = "button"; btn.className = "calbtn"; btn.setAttribute("aria-label","Välj datum i kalender"); btn.innerHTML = CAL_SVG;
+    wrap.append(nat, btn);
+    btn.addEventListener("click", e => {
+      e.preventDefault();
+      nat.value = validDate(el.value) ? el.value : (st[el.id] || "");
+      try { nat.showPicker(); } catch(err){ el.focus(); el.select(); }
+    });
+    nat.addEventListener("change", () => { if(validDate(nat.value)){ el.value = nat.value; st[el.id] = nat.value; el.setAttribute("aria-invalid","false"); render(); } });
+  }
+}
+document.querySelectorAll("input.dt").forEach(el => maskInput(el,"dt"));
+document.querySelectorAll("input.tm").forEach(el => maskInput(el,"tm"));
+bindIds.filter(id => !$(id).matches("input.dt,input.tm")).forEach(id => $(id).addEventListener("input", e => { st[id] = e.target.value; render(); }));
 checkIds.forEach(id => $(id).addEventListener("change", e => { st[id] = e.target.checked; render(); }));
 document.querySelectorAll('input[name="logi"]').forEach(el => el.addEventListener("change", e => { st.logi = e.target.value; render(); }));
 document.querySelectorAll('input[name="helg"]').forEach(el => el.addEventListener("change", e => {
