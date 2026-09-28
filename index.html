@@ -180,8 +180,8 @@ details[open] > summary::before{transform:rotate(45deg)}
       <p>Räkna fram och kontrollera traktamente. Du ser direkt vad som är skattefritt och vad som blir skattepliktig lön.</p>
     </div>
     <div class="seg" role="group" aria-label="Regelverk">
-      <button type="button" id="rv-bygg" data-regel="bygg" aria-pressed="true">Byggavtalet</button>
-      <button type="button" id="rv-skv" data-regel="skv" aria-pressed="false">Skatteverket</button>
+      <button type="button" id="rv-skv" data-regel="skv" aria-pressed="true">Skatteverket standard</button>
+      <button type="button" id="rv-bygg" data-regel="bygg" aria-pressed="false">Byggavtalet</button>
     </div>
   </header>
 
@@ -389,7 +389,7 @@ function defaults(){
   const start = todayMonday();
   const end = S(D(start) + 39*DAY); // fredag vecka 6
   return {
-    regel:"bygg", omfang:"hela",
+    regel:"skv", omfang:"hela",
     avresa:start, avresaTid:"06:30", hemkomst:end, hemTid:"16:00",
     forrStart:addMonths(start,-4), periodFran:start, periodTill:S(D(start)+27*DAY), slutarHemresa:false, slutTid:"16:00",
     logi:"egen", tillaggRatt:true,
@@ -401,7 +401,7 @@ function defaults(){
   };
 }
 let st = defaults();
-try { const saved = JSON.parse(localStorage.getItem("traktamenteskollen.v1")||"null"); if(saved && typeof saved==="object") st = Object.assign(defaults(), saved, {over:saved.over||{}}); } catch(e){}
+try { const saved = JSON.parse(localStorage.getItem("traktamenteskollen.v1")||"null"); if(saved && typeof saved==="object") st = Object.assign(defaults(), saved, {over:saved.over||{}, regel:"skv"}); } catch(e){}
 const save = () => { try { localStorage.setItem("traktamenteskollen.v1", JSON.stringify(st)); } catch(e){} };
 
 /* ---------- Måltidsreduktion (Skatteverket, inrikes) ---------- */
