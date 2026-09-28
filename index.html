@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Traktamenteskollen – räkna traktamente 2026 enligt Skatteverket och Byggavtalet</title>
-<meta name="description" content="Gratis traktamentskalkylator för 2026. Räkna ut skattefritt och skattepliktigt traktamente enligt Skatteverket eller Byggavtalet, med förrättningstillägg, hemmahelg, måltidsavdrag och långa förrättningar.">
+<meta name="description" content="Gratis traktamentskalkylator för 2026. Räkna ut skattefritt och skattepliktigt traktamente enligt Skatteverket eller Byggavtalet, med måltidsavdrag, långa förrättningar samt Byggavtalets förrättningstillägg och hemmahelg.">
 <link rel="canonical" href="https://traktamenteskollen.vercel.app/">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#1c4f7a">
@@ -317,7 +317,7 @@ details[open] > summary::before{transform:rotate(45deg)}
         </label>
       </section>
 
-      <section class="step">
+      <section class="step bygg-only" id="step-helg">
         <div class="step-head"><span class="step-no">3</span><h2>Helger och lediga dagar</h2></div>
         <div class="choice">
           <label><input type="radio" name="helg" id="helg-hemma" value="hemma" checked>
@@ -332,7 +332,6 @@ details[open] > summary::before{transform:rotate(45deg)}
             <span><b>Återresan efter helgen startar före kl. 12</b><small>Ger heldag i skattefritt dagtraktamente den dagen.</small></span></label>
         </div>
         <p class="hint bygg-only">Byggavtalet §6 2.8: för mellanliggande lediga dagar betalas ett traktamente per dag, högst två per sammanhängande ledighet. Skattefritt bara om du stannar på orten. Markera helgdagar och semester i dag-för-dag-listan.</p>
-        <p class="hint skv-only">Dagar hemma räknas inte som tjänsteresa. Lediga dagar på orten ger traktamente som vanligt.</p>
       </section>
 
       <section class="step">
@@ -572,7 +571,7 @@ function compute(){
     if(endsHome && t===tEnd) return "hemresa";
     const o = st.over[s]; if(o && o.typ) return o.typ;
     const w = dow(t);
-    if(w===0 || w===6) return st.helg==="hemma" ? "ledigHemma" : "ledigKvar";
+    if(w===0 || w===6) return st.regel==="bygg" && st.helg==="hemma" ? "ledigHemma" : "ledigKvar";
     return "arbete";
   };
   const isLedig = ty => ty==="ledigKvar" || ty==="ledigHemma";
@@ -682,6 +681,7 @@ function compute(){
 const $ = id => document.getElementById(id);
 let last = null;
 const TYPE_LABEL = {avresa:"Avresedag", hemresa:"Hemresedag", arbete:"Arbetsdag", ledigKvar:"Ledig på orten", ledigHemma:"Ledig hemma"};
+const typeLabel = k => k==="ledigHemma" && st.regel!=="bygg" ? "Hemma (ingen resa)" : TYPE_LABEL[k];
 
 function render(){
   const res = compute();
@@ -691,6 +691,8 @@ function render(){
   document.querySelectorAll(".skv-only").forEach(el => el.hidden = bygg);
   $("f-tillagg").hidden = !bygg || st.logi!=="egen";
   $("f-hemresa").hidden = st.helg!=="hemma";
+  // Numrera synliga steg i ordning
+  [...document.querySelectorAll("#form > .step")].filter(s => !s.hidden).forEach((s,i) => { s.querySelector(".step-no").textContent = i+1; });
   $("f-eget").hidden = st.skvBelopp!=="eget";
   $("f-frukostIngar").hidden = !(st.mF) || (bygg && st.friKost);
   $("logi-ag-desc").textContent = bygg ? "Traktamentet minskas med 35 %. Inget nattraktamente, inget förrättningstillägg." : "Inget nattraktamente.";
@@ -736,7 +738,7 @@ function renderMilestones(res){
   items.push([res.bygg ? "2 år: traktamentsrätten upphör" : "2 år: skattefritt 50 %", addMonths(f,24)]);
   items.sort((a,b)=>D(a[1])-D(b[1]));
   $("milestones").innerHTML = items.map(([l,d]) => `<div class="${D(d) > last ? "past" : ""}"><span>${l}</span><span class="num">${fmtDate(d)}</span></div>`).join("")
-    + `<p class="hint" style="margin-top:4px">Grått = efter vald period. Hemmahelger bryter inte förrättningen.</p>`;
+    + `<p class="hint" style="margin-top:4px">Grått = efter vald period. ${res.bygg ? "Hemmahelger bryter inte förrättningen." : "Resor hem över helgen bryter inte tremånadersperioden."}</p>`;
 }
 
 function breakdownLines(res){
@@ -776,8 +778,8 @@ function renderDays(res){
     const cls = [(w===0||w===6)?"wknd":"", r.typ==="ledigHemma"?"home":"", (prevMonth>=0 && mo!==prevMonth)?"monthsep":""].join(" ");
     prevMonth = mo;
     const typeCell = r.canEditType
-      ? `<select data-d="${r.s}" data-k="typ" aria-label="Dagtyp ${r.s}">${["arbete","ledigKvar","ledigHemma"].map(k=>`<option value="${k}"${r.typ===k?" selected":""}>${TYPE_LABEL[k]}</option>`).join("")}</select>`
-      : `<b>${TYPE_LABEL[r.typ]}</b>`;
+      ? `<select data-d="${r.s}" data-k="typ" aria-label="Dagtyp ${r.s}">${["arbete","ledigKvar","ledigHemma"].map(k=>`<option value="${k}"${r.typ===k?" selected":""}>${typeLabel(k)}</option>`).join("")}</select>`
+      : `<b>${typeLabel(r.typ)}</b>`;
     const meal = (k,l,v) => `<label title="${l}"><input type="checkbox" data-d="${r.s}" data-k="${k}"${v?" checked":""} aria-label="${l} ${r.s}">${l[0]}</label>`;
     const chips = [];
     if(r.kind==="hel") chips.push(`<span class="chip">Heldag</span>`); else if(r.kind==="halv") chips.push(`<span class="chip">Halvdag</span>`);
@@ -818,7 +820,7 @@ function renderRules(){
     <li>Efter 3 mån: <span class="num">${pct(R.hel*.7,20)} / ${pct(R.hel*.7,35)} / ${pct(R.hel*.7,70)} / ${pct(R.hel*.7,90)} kr</span>.</li>
     <li>Kostförmån: frukost <span class="num">${R.kost.f}</span>, lunch/middag <span class="num">${R.kost.lm}</span>, hel dag <span class="num">${R.kost.max} kr</span>. Hotellfrukost som ingår i rumspriset ger ingen förmån.</li></ul></div>`;
   const assump = `<div><h3>Antaganden</h3><ul>
-    <li>Hemmahelg: dagen du reser hem ger ingen natt, dagarna hemma ger inget skattefritt. Byggavtalets två traktamenten för helgen blir då skattepliktiga.</li>
+    ${bygg ? "<li>Hemmahelg: dagen du reser hem ger ingen natt, dagarna hemma ger inget skattefritt. Byggavtalets två traktamenten för helgen blir då skattepliktiga.</li>" : "<li>Dagar du markerar som hemma räknas inte som tjänsteresa och ger inget traktamente.</li>"}
     <li>Hemresedagen: Byggavtalet betalar hela beloppet inkl. logi, men utan övernattning är nattraktamentet inte skattefritt. Den delen blir lön.</li>
     <li>Halvdag efter tre månader räknas som hälften av det reducerade heldagsbeloppet.</li>
     <li>Belopp väljs efter kalenderår dag för dag.</li></ul></div>`;
@@ -930,8 +932,8 @@ function inputSummary(){
   }
   out.push(["Boende", st.logi==="egen" ? "Ordnar logi själv" : "Arbetsgivaren står för logi"]);
   if(bygg && st.logi==="egen") out.push(["Förrättningstillägg", st.tillaggRatt ? "Ja" : "Nej"]);
-  out.push(["Helger", st.helg==="hemma" ? "Hemmahelg" : "Stannar på orten"]);
-  if(st.helg==="hemma"){
+  if(bygg) out.push(["Helger", st.helg==="hemma" ? "Hemmahelg" : "Stannar på orten"]);
+  if(bygg && st.helg==="hemma"){
     out.push(["Hemma före kl. 19 inför helgen", st.fredagFore19 ? "Ja" : "Nej"]);
     out.push(["Återresa före kl. 12 efter helgen", st.mandagFore12 ? "Ja" : "Nej"]);
   }
@@ -971,7 +973,7 @@ function buildPrint(){
     + res.rows.map(r=>{
         const grund = [kindLabel(r.kind), r.night?"+ natt":"", r.per===2?"70 %":r.per===3?"50 %":""].filter(Boolean).join(" ");
         const mat = [r.mf&&"F", r.ml&&"L", r.mm&&"M"].filter(Boolean).join(" ") || "–";
-        return `<tr><td>${fmtDay(r.t)}</td><td>${TYPE_LABEL[r.typ]}</td><td>${grund}</td><td>${mat}</td>${bygg?`<td>${r.worked?"Ja":"–"}</td>`:""}<td class="money">${kr(r.paid)}</td><td class="money">${kr(r.taxFree)}</td><td class="money">${kr(r.taxable)}</td>${bygg?`<td class="money">${r.till?kr(r.till):"–"}</td>`:""}</tr>`
+        return `<tr><td>${fmtDay(r.t)}</td><td>${typeLabel(r.typ)}</td><td>${grund}</td><td>${mat}</td>${bygg?`<td>${r.worked?"Ja":"–"}</td>`:""}<td class="money">${kr(r.paid)}</td><td class="money">${kr(r.taxFree)}</td><td class="money">${kr(r.taxable)}</td>${bygg?`<td class="money">${r.till?kr(r.till):"–"}</td>`:""}</tr>`
           + (r.why ? `<tr class="pr-why"><td></td><td class="wrap" colspan="${bygg?8:6}">${esc(r.why)}</td></tr>` : "");
       }).join("") + `</tbody></table>`;
   h += `<p class="pr-note">Belopp enligt Skatteverket (belopp och procent ${YEARS[YEARS.length-1]})${bygg?" och Byggavtalet 2025–2027 §6":""}. Kontrollverktyg som inte ersätter lönesystemets beräkning.</p>`;
@@ -1003,43 +1005,43 @@ function loadXlsx(){
 }
 function buildWorkbook(XLSX){
   const {res} = last, t = totals(), bygg = res.bygg, lines = breakdownLines(res), tot = sumLines(lines);
-  const KR = '#,##0.00 "kr"';
+  const KR = "#,##0.00";
   const fmtCols = (ws, cols, from, to, z) => { for(let R=from; R<=to; R++) for(const C of cols){ const c = ws[XLSX.utils.encode_cell({r:R,c:C})]; if(c && typeof c.v==="number") c.z = z; } };
 
   // Blad 1: Sammanfattning
   const a = [["Traktamenteskollen"], [`Beräknad ${nowStamp()}`], [], ["Förutsättningar"], ...inputSummary(), []];
   const sumStart = a.length;
-  a.push(["Summering", "Belopp"], ["Utbetalt totalt", r2(t.cash)], ["Skattefritt", r2(t.free)], ["Skattepliktigt", r2(t.tax)]);
+  a.push(["Summering", "Belopp (kr)"], ["Utbetalt totalt", r2(t.cash)], ["Skattefritt", r2(t.free)], ["Skattepliktigt", r2(t.tax)]);
   if(t.till) a.push(["  varav förrättningstillägg", r2(t.till)]);
   a.push(["Kostförmån (skattepliktig, betalas inte ut)", r2(t.kost)]);
   const sumEnd = a.length-1;
   a.push([]);
   const brStart = a.length;
-  a.push(["Uppdelning", "Dagar", "Utbetalt", "Skattefritt", "Skattepliktigt"]);
+  a.push(["Uppdelning", "Dagar", "Utbetalt (kr)", "Skattefritt (kr)", "Skattepliktigt (kr)"]);
   lines.forEach(l => a.push([l.label, l.n, r2(l.paid), r2(l.free), r2(l.tax)]));
-  a.push(["Summa kontant", "", r2(tot.paid), r2(tot.free), r2(tot.tax)]);
+  a.push(["Summa kontant", null, r2(tot.paid), r2(tot.free), r2(tot.tax)]);
   const ws1 = XLSX.utils.aoa_to_sheet(a);
   fmtCols(ws1, [1], sumStart, sumEnd, KR);
   fmtCols(ws1, [2,3,4], brStart, a.length-1, KR);
   ws1["!cols"] = [{wch:44},{wch:40},{wch:14},{wch:14},{wch:14}];
 
   // Blad 2: Dag för dag
-  const head = ["Datum","Veckodag","Dagtyp","Skattefri grund","Nattraktamente","Nivå","Frukost","Lunch","Middag","Måltidsavdrag",
-    ...(bygg?["Arbete"]:[]), "Utbetalt","Skattefritt","Skattepliktigt", ...(bygg?["Förrättningstillägg","Tillägg %"]:[]), "Kostförmån","Förklaring"];
+  const head = ["Datum","Veckodag","Dagtyp","Skattefri grund","Nattraktamente","Nivå","Frukost","Lunch","Middag","Måltidsavdrag (kr)",
+    ...(bygg?["Arbete"]:[]), "Utbetalt (kr)","Skattefritt (kr)","Skattepliktigt (kr)", ...(bygg?["Förrättningstillägg (kr)","Tillägg %"]:[]), "Kostförmån (kr)","Förklaring"];
   const d = [head, ...res.rows.map(r => [
-    r.s, WD[new Date(r.t).getUTCDay()], TYPE_LABEL[r.typ], kindLabel(r.kind), r.night?"Ja":"Nej",
+    r.s, WD[new Date(r.t).getUTCDay()], typeLabel(r.typ), kindLabel(r.kind), r.night?"Ja":"Nej",
     r.kind==="ingen" ? "–" : (r.per===1?"100 %":r.per===2?"70 %":"50 %"),
-    r.mf?"Ja":"", r.ml?"Ja":"", r.mm?"Ja":"", r.red,
-    ...(bygg?[r.worked?"Ja":""]:[]),
+    r.mf?"Ja":null, r.ml?"Ja":null, r.mm?"Ja":null, r.red,
+    ...(bygg?[r.worked?"Ja":null]:[]),
     r2(r.paid), r2(r.taxFree), r2(r.taxable),
-    ...(bygg?[r2(r.till), r.tillPct ? r.tillPct/100 : ""]:[]),
-    r2(r.kost), r.why||""
+    ...(bygg?[r2(r.till), r.tillPct ? r.tillPct/100 : null]:[]),
+    r2(r.kost), r.why||null
   ])];
   const n = d.length; // rader inkl. rubrik
-  const sumRow = head.map(() => ""); sumRow[0] = "Summa"; d.push(sumRow);
+  const sumRow = head.map(() => null); sumRow[0] = "Summa"; d.push(sumRow);
   const ws2 = XLSX.utils.aoa_to_sheet(d);
   const col = name => head.indexOf(name);
-  const moneyCols = ["Måltidsavdrag","Utbetalt","Skattefritt","Skattepliktigt","Förrättningstillägg","Kostförmån"].map(col).filter(c => c>=0);
+  const moneyCols = ["Måltidsavdrag (kr)","Utbetalt (kr)","Skattefritt (kr)","Skattepliktigt (kr)","Förrättningstillägg (kr)","Kostförmån (kr)"].map(col).filter(c => c>=0);
   fmtCols(ws2, moneyCols, 1, n-1, KR);
   moneyCols.forEach(c => {
     const L = XLSX.utils.encode_col(c), v = r2(d.slice(1, n).reduce((a,row) => a + (Number(row[c])||0), 0));
