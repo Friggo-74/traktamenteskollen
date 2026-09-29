@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Traktamenteskollen – räkna traktamente 2026 enligt Skatteverket och Byggavtalet</title>
-<meta name="description" content="Gratis traktamentskalkylator för 2026. Räkna ut skattefritt och skattepliktigt traktamente enligt Skatteverket eller Byggavtalet, med måltidsavdrag, långa förrättningar samt Byggavtalets förrättningstillägg och hemmahelg.">
+<meta name="description" content="Gratis traktamentskalkylator för 2026. Räkna ut skattefritt och skattepliktigt traktamente i Sverige och utomlands (normalbelopp för alla länder) enligt Skatteverket eller Byggavtalet, med måltidsavdrag, långa förrättningar samt Byggavtalets förrättningstillägg och hemmahelg.">
 <link rel="canonical" href="https://traktamenteskollen.se/">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#1c4f7a">
@@ -41,6 +41,8 @@
       "mainEntity": [
         { "@type": "Question", "name": "Hur mycket är skattefritt traktamente 2026?",
           "acceptedAnswer": { "@type": "Answer", "text": "För tjänsteresor inom Sverige 2026 är det skattefria traktamentet 300 kr för hel dag, 150 kr för halv dag och 150 kr i nattraktamente om du ordnar logi själv. Efter tre månader på samma ort sänks heldagen till 210 kr och efter två år till 150 kr." } },
+        { "@type": "Question", "name": "Hur mycket är traktamentet utomlands 2026?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Vid utrikes tjänsteresa gäller Skatteverkets normalbelopp för landet där du tillbringat längst tid under dagen (06–24). År 2026 är det till exempel 760 kr i Tyskland, 1 054 kr i Norge och 1 049 kr i USA per hel dag. Halvdag och nattraktamente är halva normalbeloppet." } },
         { "@type": "Question", "name": "Hur mycket är traktamentet enligt Byggavtalet 2026?",
           "acceptedAnswer": { "@type": "Answer", "text": "Byggavtalet betalar 450 kr per dag inklusive kost och logi från 1 januari 2026 (435 kr under 2025). Beloppet minskas med 35 procent om arbetsgivaren står för logi och med 55 procent vid fri kost." } },
         { "@type": "Question", "name": "Vad är förrättningstillägg?",
@@ -203,6 +205,19 @@ details[open] > summary::before{transform:rotate(45deg)}
 .faq details > summary h3{font-size:15px;font-weight:600}
 .faq details p{margin:8px 0 2px;max-width:70ch;color:var(--ink)}
 .export{display:flex;gap:8px;flex-wrap:wrap}
+.who{border-top:1px solid var(--line);padding-top:12px}
+.who > summary{font-size:14px}
+.who-fields{display:grid;gap:10px;margin-top:10px}
+.who-fields i{font-style:normal;font-weight:400;opacity:.8}
+input.txt{font:15px var(--f-body);color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
+input.landin{font:13px var(--f-body);color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:4px 8px;width:150px}
+input.landin[aria-invalid="true"]{border-color:var(--err)}
+#land{width:100%}
+.pr-who{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 24px;font-size:10pt;margin:0 0 6px}
+.pr-who div{display:flex;gap:8px;border-bottom:1px solid #999;padding:3px 0}
+.pr-who span:first-child{color:#555;min-width:70px}
+.pr-sign{display:grid;grid-template-columns:repeat(2,1fr);gap:28px;margin-top:34px;font-size:9pt;color:#555}
+.pr-sign div{border-top:1px solid #111;padding-top:4px}
 .export .btn{flex:1 1 140px}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 #printReport{display:none}
@@ -231,6 +246,7 @@ details[open] > summary::before{transform:rotate(45deg)}
   #printReport tr{break-inside:avoid}
   #printReport thead{display:table-header-group}
   .pr-note{font-size:8pt;color:#555;margin-top:12px}
+  .pr-title{font-size:15pt;margin:4px 0 8px}
 }
 .head-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .btn{font:600 13px var(--f-body);border:1px solid var(--line);background:var(--surface-2);color:var(--ink);padding:7px 12px;border-radius:8px;cursor:pointer}
@@ -308,6 +324,25 @@ details[open] > summary::before{transform:rotate(45deg)}
           <label class="field" id="f-slutTid" hidden><span>Hemkomst klockan</span><div class="row"><input type="text" class="tm" id="slutTid"></div></label>
         </div>
         <p class="hint" id="hint-period"></p>
+      </section>
+
+      <section class="step skv-only" id="step-resmal">
+        <div class="step-head"><span class="step-no">2</span><h2>Resmål</h2></div>
+        <div class="seg small" role="group" aria-label="Resmål">
+          <button type="button" id="rm-sverige" data-resmal="sverige" aria-pressed="true">Inom Sverige</button>
+          <button type="button" id="rm-utland" data-resmal="utland" aria-pressed="false">Utlandet</button>
+        </div>
+        <div id="f-utland" class="grid2" hidden>
+          <label class="field" style="grid-column:1/-1"><span>Land</span>
+            <select id="land" aria-describedby="land-info"></select>
+          </label>
+          <p class="hint" id="land-info" style="grid-column:1/-1"></p>
+          <label class="check"><input type="checkbox" id="avresaSverige">
+            <span><b>Avresedagen: mest tid i Sverige</b><small>T.ex. flyg på eftermiddagen. Då gäller svenska belopp den dagen.</small></span></label>
+          <label class="check"><input type="checkbox" id="hemresaSverige">
+            <span><b>Hemresedagen: mest tid i Sverige</b><small>T.ex. hemflyg på förmiddagen.</small></span></label>
+          <p class="hint" style="grid-column:1/-1">Normalbeloppet gäller för landet där du varit längst tid under dagen (06–24). Restid med flyg och båt räknas inte. Reser du i flera länder ändrar du land per dag i dag-för-dag-listan.</p>
+        </div>
       </section>
 
       <section class="step">
@@ -394,6 +429,16 @@ details[open] > summary::before{transform:rotate(45deg)}
           <div class="item it-ben" id="s-ben-row"><span class="dot"></span><span class="t">Kostförmån<small>Skattepliktig, betalas inte ut</small></span><span class="v" id="s-ben">0 kr</span></div>
         </div>
         <div class="msgs" id="msgs"></div>
+        <details class="who" id="whoBox">
+          <summary>Uppgifter till reseräkningen</summary>
+          <div class="who-fields">
+            <label class="field"><span>Namn</span><input type="text" id="whoNamn" class="txt" autocomplete="name"></label>
+            <label class="field"><span>Företag</span><input type="text" id="whoForetag" class="txt" autocomplete="organization"></label>
+            <label class="field"><span>Ärende / syfte <i>(valfritt)</i></span><input type="text" id="whoArende" class="txt" autocomplete="off"></label>
+            <label class="field"><span>Resmål / ort <i>(valfritt)</i></span><input type="text" id="whoOrt" class="txt" autocomplete="off"></label>
+            <p class="hint">Uppgifterna sparas inte och skickas ingenstans. De används bara i PDF- och Excel-filen och försvinner när du stänger sidan.</p>
+          </div>
+        </details>
         <div class="export">
           <button type="button" class="btn" id="exportPdf">Spara som PDF</button>
           <button type="button" class="btn" id="exportXlsx">Exportera till Excel</button>
@@ -436,6 +481,10 @@ details[open] > summary::before{transform:rotate(45deg)}
         <p>För tjänsteresor inom Sverige 2026 är det skattefria traktamentet 300 kr för hel dag, 150 kr för halv dag och 150 kr i nattraktamente om du ordnar logi själv. Efter tre månader på samma ort sänks heldagen till 210 kr och efter två år till 150 kr. Nattraktamentet sänks inte.</p>
       </details>
       <details>
+        <summary><h3>Hur mycket är traktamentet utomlands 2026?</h3></summary>
+        <p>Vid utrikes tjänsteresa gäller Skatteverkets normalbelopp för landet där du tillbringat längst tid under dagen (06–24). År 2026 är det till exempel 760 kr i Tyskland, 1 054 kr i Norge och 1 049 kr i USA per hel dag. Halvdag och nattraktamente är halva normalbeloppet. Tillbringar du mest tid i Sverige på avrese- eller hemresedagen gäller svenska belopp.</p>
+      </details>
+      <details>
         <summary><h3>Hur mycket är traktamentet enligt Byggavtalet 2026?</h3></summary>
         <p>Byggavtalet betalar 450 kr per dag inklusive kost och logi från 1 januari 2026 (435 kr under 2025). Beloppet minskas med 35 procent om arbetsgivaren står för logi och med 55 procent vid fri kost. Reser du efter kl. 12 första dagen eller kommer hem före kl. 19 sista dagen blir det halvt traktamente.</p>
       </details>
@@ -463,6 +512,7 @@ details[open] > summary::before{transform:rotate(45deg)}
   </section>
 </div>
 
+<datalist id="landlista"></datalist>
 <section id="printReport" aria-hidden="true"></section>
 
 <div class="mbar" aria-hidden="true">
@@ -480,7 +530,18 @@ const RATES = {
   2025:{hel:290,halv:145,natt:145,bygg:435,kost:{f:61,lm:122,max:305}},
   2026:{hel:300,halv:150,natt:150,bygg:450,kost:{f:62,lm:124,max:310}}
 };
+// Skatteverkets normalbelopp för utrikes tjänsteresa (hel dag), öppna data "Traktamente, utland"
+const UTLAND = {
+  2025:{"Albanien":345,"Algeriet":376,"Amerikanska Samoa":1020,"Angola":502,"Anguilla":1170,"Antigua och Barbuda":829,"Argentina":415,"Armenien":521,"Aruba":925,"Australien":833,"Azerbajdzjan":473,"Bahamas":1291,"Bahrain":1011,"Bangladesh":424,"Barbados":1067,"Belarus":290,"Belgien":924,"Belize":683,"Benin":592,"Bermuda":1361,"Bolivia":435,"Bonaire":824,"Bosnien-Hercegovina":374,"Botswana":423,"Brasilien":402,"Brunei Darussalam":523,"Bulgarien":449,"Burkina Faso":460,"Burma":336,"Burundi":389,"Caymanöarna":993,"Centralafrikanska republiken":488,"Chile":521,"Colombia":343,"Cooköarna":674,"Costa Rica":770,"Curacao":740,"Cypern":650,"Danmark":1268,"Djibouti":699,"Dominikanska republiken":444,"Ecuador":660,"Egypten":290,"Ekvatorialguinea":701,"El Salvador":537,"Elfenbenskusten":757,"Eritrea":467,"Estland":731,"Eswatini":310,"Etiopien":290,"Fiji":491,"Filippinerna":537,"Finland":952,"Frankrike":910,"Franska Guyana":765,"Franska Polynesien":986,"Förenade Arabemiraten":1012,"Gabon":706,"Gambia":337,"Georgien":370,"Ghana":335,"Gibraltar":702,"Grekland":746,"Grenada":677,"Grönland":1268,"Guadeloupe":772,"Guam":868,"Guatemala":650,"Guinea":658,"Guyana":738,"Haiti":838,"Honduras":511,"Hong Kong":1018,"Indien":347,"Indonesien":518,"Irak":676,"Irland":1099,"Island":1167,"Israel":947,"Italien":828,"Jamaica":494,"Japan":454,"Jordanien":925,"Kambodja":579,"Kamerun":546,"Kanada":951,"Kazakstan":383,"Kenya":518,"Kina":672,"Kirgizistan":290,"Kiribati":367,"Kongo (Demokratiska Republiken)":650,"Kongo (Brazzaville)":741,"Kosovo":290,"Kroatien":558,"Kuba":478,"Kuwait":882,"Laos":290,"Lesotho":290,"Lettland":804,"Liberia":711,"Libyen":290,"Liechtenstein":1180,"Litauen":671,"Luxemburg":1022,"Macao":682,"Madagaskar":290,"Malawi":327,"Malaysia":332,"Maldiverna":545,"Mali":502,"Malta":658,"Marocko":506,"Martinique":811,"Mauretanien":388,"Mauritius":383,"Mexiko":577,"Mikronesiska federationen":643,"Mocambique":440,"Moldavien":429,"Monaco":1070,"Mongoliet":398,"Montenegro":411,"Myanmar":336,"Namibia":311,"Nederländerna":756,"Nepal":290,"Nicaragua":527,"Niger":410,"Nordmakedonien":315,"Norge":1095,"Nya Kaledonien":923,"Nya Zeeland":640,"Oman":944,"Pakistan":290,"Panama":757,"Papua Nya Guinea":598,"Paraguay":315,"Peru":484,"Polen":615,"Portugal":619,"Puerto Rico":806,"Qatar":931,"Rumänien":462,"Rwanda":290,"Ryssland":589,"Réunion":763,"Saint Lucia":789,"Saint Vincent och Grenadinerna":514,"Salomonöarna":729,"Samoa, Självständiga staten":616,"San Marino":828,"Saudiarabien":1158,"Schweiz":1402,"Senegal":673,"Serbien":515,"Seychellerna":1011,"Sierra Leone":391,"Singapore":961,"Sint Maarten":831,"Slovakien":763,"Slovenien":617,"Spanien":676,"Sri Lanka":515,"Storbritannien och Nordirland":986,"Surinam":543,"Swaziland":310,"Sydafrika":383,"Sydkorea":617,"Tadzjikistan":290,"Taiwan":590,"Tanzania":341,"Tchad":624,"Thailand":567,"Tjeckien":684,"Togo":560,"Tonga":498,"Trinidad och Tobago":923,"Tunisien":290,"Turkiet":342,"Turkmenistan":1628,"Tyskland":774,"USA":1152,"Uganda":458,"Ukraina":334,"Ungern":637,"Uruguay":604,"Uzbekistan":318,"Vanuatu":697,"Venezuela":549,"Vietnam":404,"Zambia":322,"Österrike":781,"Östtimor":525,"Övriga länder och områden":499},
+  2026:{"Albanien":351,"Algeriet":334,"Amerikanska Samoa":889,"Angola":540,"Anguilla":1037,"Antigua och Barbuda":742,"Argentina":388,"Armenien":469,"Aruba":864,"Australien":727,"Azerbajdzjan":437,"Bahamas":1146,"Bahrain":881,"Bangladesh":399,"Barbados":930,"Belarus":300,"Belgien":897,"Belize":591,"Benin":562,"Bermuda":1217,"Bolivia":406,"Bonaire":722,"Bosnien-Hercegovina":355,"Botswana":358,"Brasilien":376,"Brunei Darussalam":458,"Bulgarien":459,"Burkina Faso":421,"Burma":367,"Burundi":426,"Caymanöarna":887,"Centralafrikanska republiken":459,"Chile":479,"Colombia":378,"Cooköarna":557,"Costa Rica":677,"Curacao":645,"Cypern":601,"Danmark":1226,"Djibouti":619,"Dominikanska republiken":457,"Ecuador":573,"Egypten":300,"Ekvatorialguinea":652,"El Salvador":462,"Elfenbenskusten":755,"Eritrea":399,"Estland":683,"Eswatini":300,"Etiopien":300,"Fiji":415,"Filippinerna":466,"Finland":968,"Frankrike":850,"Franska Guyana":735,"Franska Polynesien":926,"Förenade Arabemiraten":883,"Gabon":650,"Gambia":304,"Georgien":331,"Ghana":580,"Gibraltar":654,"Grekland":695,"Grenada":603,"Grönland":1226,"Guadeloupe":749,"Guam":765,"Guatemala":561,"Guinea":566,"Guyana":716,"Haiti":870,"Honduras":423,"Hong Kong":895,"Indien":300,"Indonesien":418,"Irak":590,"Irland":1038,"Island":1125,"Israel":956,"Italien":802,"Jamaica":425,"Japan":386,"Jordanien":803,"Kambodja":532,"Kamerun":524,"Kanada":895,"Kazakstan":353,"Kenya":472,"Kina":581,"Kirgizistan":300,"Kiribati":309,"Kongo (Demokratiska Republiken)":990,"Kongo (Brazzaville)":734,"Kosovo":300,"Kroatien":550,"Kuba":587,"Kuwait":849,"Laos":300,"Lesotho":300,"Lettland":763,"Liberia":649,"Libyen":300,"Liechtenstein":1120,"Litauen":635,"Luxemburg":953,"Macao":590,"Madagaskar":300,"Malawi":308,"Malaysia":319,"Maldiverna":503,"Mali":488,"Malta":659,"Marocko":507,"Martinique":753,"Mauretanien":350,"Mauritius":349,"Mexiko":562,"Mikronesiska federationen":560,"Mocambique":403,"Moldavien":414,"Monaco":1073,"Mongoliet":307,"Montenegro":391,"Myanmar":367,"Namibia":300,"Nederländerna":745,"Nepal":300,"Nicaragua":469,"Niger":394,"Nordmakedonien":312,"Norge":1054,"Nya Kaledonien":862,"Nya Zeeland":525,"Oman":822,"Pakistan":300,"Panama":673,"Papua Nya Guinea":507,"Paraguay":349,"Peru":482,"Polen":597,"Portugal":616,"Puerto Rico":701,"Qatar":837,"Rumänien":414,"Rwanda":300,"Ryssland":661,"Réunion":751,"Saint Lucia":706,"Saint Vincent och Grenadinerna":441,"Salomonöarna":648,"Samoa, Självständiga staten":537,"San Marino":802,"Saudiarabien":1016,"Schweiz":1332,"Senegal":626,"Serbien":533,"Seychellerna":846,"Sierra Leone":345,"Singapore":845,"Sint Maarten":724,"Slovakien":737,"Slovenien":574,"Spanien":635,"Sri Lanka":424,"Storbritannien och Nordirland":901,"Surinam":424,"Swaziland":300,"Sydafrika":349,"Sydkorea":517,"Tadzjikistan":300,"Taiwan":554,"Tanzania":331,"Tchad":580,"Thailand":521,"Tjeckien":695,"Togo":533,"Tonga":438,"Trinidad och Tobago":801,"Tunisien":300,"Turkiet":366,"Turkmenistan":1454,"Tyskland":760,"USA":1049,"Uganda":446,"Ukraina":300,"Ungern":679,"Uruguay":595,"Uzbekistan":324,"Vanuatu":603,"Venezuela":300,"Vietnam":328,"Zambia":384,"Österrike":730,"Östtimor":451,"Övriga länder och områden":470},
+};
 const YEARS = Object.keys(RATES).map(Number).sort();
+const UTL_YEARS = Object.keys(UTLAND).map(Number).sort();
+const OVRIGA = "Övriga länder och områden";
+const utlYear = y => UTLAND[y] ? y : (y < UTL_YEARS[0] ? UTL_YEARS[0] : UTL_YEARS[UTL_YEARS.length-1]);
+const LANDER = Object.keys(UTLAND[UTL_YEARS[UTL_YEARS.length-1]]);
+const isLand = c => c==="Sverige" || LANDER.includes(c);
+const normFor = (c, y) => { const t = UTLAND[utlYear(y)]; return t[c] ?? t[OVRIGA]; };
 const rateYear = y => RATES[y] ? y : (y < YEARS[0] ? YEARS[0] : YEARS[YEARS.length-1]);
 
 /* ---------- Datum ---------- */
@@ -524,6 +585,7 @@ function defaults(regel){
     helg:"hemma", fredagFore19:true, mandagFore12:true,
     friKost:false, mF:false, mL:false, mM:false, frukostIngar:true,
     skvBelopp:"norm", egetHel:"", egetHalv:"", egetNatt:"",
+    resmal:"sverige", land:"Tyskland", avresaSverige:false, hemresaSverige:false,
     forlangd:false,
     over:{}
   };
@@ -537,8 +599,10 @@ const save = () => { try { localStorage.setItem("traktamenteskollen.v1", JSON.st
 
 /* ---------- Måltidsreduktion (Skatteverket, inrikes) ---------- */
 const pct = (x,p) => Math.round(x*p/100 + 1e-9);
-function mealRed(x,f,l,m){
+function mealRed(x,f,l,m,utr){
   if(!x) return 0;
+  // Utrikes: 15 % frukost, 35 % lunch/middag, 85 % alla (av dagens belopp)
+  if(utr) return r2(x*((f?15:0) + ((l?1:0)+(m?1:0))*35)/100);
   const n = (l?1:0)+(m?1:0);
   if(f && n===2) return pct(x,90);
   if(n===2) return pct(x,70);
@@ -581,6 +645,18 @@ function compute(){
     return "arbete";
   };
   const isLedig = ty => ty==="ledigKvar" || ty==="ledigHemma";
+  const utland = !bygg && st.resmal==="utland";
+  // Land för en dag: manuellt val, annars Sverige på hemmadagar och markerade resdagar, annars resmålet
+  const countryOf = (t, ty, fromTy) => {
+    if(!utland) return "Sverige";
+    if(ty==="ute") return fromTy==="hemresa" ? "Sverige" : st.land;
+    const o = st.over[S(t)];
+    if(o && o.land && isLand(o.land)) return o.land;
+    if(ty==="ledigHemma") return "Sverige";
+    if(ty==="avresa" && st.avresaSverige) return "Sverige";
+    if(ty==="hemresa" && st.hemresaSverige) return "Sverige";
+    return isLand(st.land) ? st.land : OVRIGA;
+  };
 
   const rows = [];
   let yearFallback = false;
@@ -590,6 +666,10 @@ function compute(){
     if(ry!==y) yearFallback = y;
     const R = RATES[ry];
     const o = st.over[s] || {};
+    // Natten räknas till dagens land. Är dagen i Sverige (t.ex. kvällsflyg ut) gäller nästa dags land.
+    const land = countryOf(t, typ), landNatt = land!=="Sverige" ? land : countryOf(t+DAY, next, typ);
+    const utr = land!=="Sverige";
+    if(utr && !UTLAND[y]) yearFallback = y;
     const atOrten = typ!=="ledigHemma";
     const travelHome = (typ==="arbete"||typ==="avresa") && next==="ledigHemma";
     const travelBack = (typ==="arbete"||typ==="hemresa") && prev==="ledigHemma";
@@ -599,8 +679,9 @@ function compute(){
     // Skattefritt: period efter Skatteverkets regler för långvarig tjänsteresa
     const per = t < t3m ? 1 : (t < t2y ? 2 : 3);
     const factor = per===1 ? 1 : (per===2 ? .7 : .5);
-    const full = R.hel*factor;
-    const half = per===1 ? R.halv : Math.round(full/2);
+    const N = utr ? normFor(land, y) : 0;
+    const full = utr ? N*factor : R.hel*factor;
+    const half = utr ? r2(full/2) : (per===1 ? R.halv : Math.round(full/2));
 
     let kind = "hel";
     if(typ==="avresa") kind = depMin <= 720 ? "hel" : "halv";
@@ -616,9 +697,9 @@ function compute(){
     const dL = atOrten && (allMeals || st.mL);
     const dM = atOrten && (allMeals || st.mM);
     const mf = o.f ?? dF, ml = o.l ?? dL, mm = o.m ?? dM;
-    const red = mealRed(dagBelopp, mf, ml, mm);
+    const red = mealRed(dagBelopp, mf, ml, mm, utr);
     const tfDag = Math.max(0, dagBelopp - red);
-    const tfNatt = night ? R.natt : 0;
+    const tfNatt = night ? (landNatt!=="Sverige" ? r2(normFor(landNatt, y)/2) : R.natt) : 0;
     const K = R.kost;
     const kost = atOrten || mf || ml || mm ? Math.min(K.max, (mf && !(st.frukostIngar && !allMeals) ? K.f : 0) + (ml?K.lm:0) + (mm?K.lm:0)) : 0;
 
@@ -645,7 +726,7 @@ function compute(){
         till = r2(T*tillPct/100);
       }
     } else {
-      if(st.skvBelopp==="norm"){
+      if(st.skvBelopp==="norm" || utland){
         paid = tfDag + tfNatt; taxFree = paid;
       } else {
         const eh = Number(st.egetHel)||0, ehh = Number(st.egetHalv)||0, en = Number(st.egetNatt)||0;
@@ -670,7 +751,7 @@ function compute(){
       else why = "Utbetalt belopp är högre än det skattefria.";
     }
 
-    rows.push({why,t,s,typ,kind,per,factor,night,travelHome,travelBack,mf,ml,mm,red,dagBelopp,tfDag,tfNatt,paid,taxFree,taxable,till,tillPct,worked,kost,capped,rightEnded,ledigIdx,
+    rows.push({land,utr,N,why,t,s,typ,kind,per,factor,night,travelHome,travelBack,mf,ml,mm,red,dagBelopp,tfDag,tfNatt,paid,taxFree,taxable,till,tillPct,worked,kost,capped,rightEnded,ledigIdx,
       canEditType: !(typ==="avresa"||typ==="hemresa")});
   }
 
@@ -680,7 +761,7 @@ function compute(){
   if(rows.some(r=>r.capped)) msgs.push({t:"info", m:"Lediga dagar utöver två i följd ger inget traktamente enligt Byggavtalet §6 2.8."});
   if(rows.some(r=>r.per===2) && !rows.some(r=>r.per===1)) msgs.push({t:"info", m:"Hela perioden ligger efter tre månader: skattefritt dagtraktamente är 70 %."});
   if(bygg && st.logi==="egen" && !st.tillaggRatt) msgs.push({t:"info", m:"Förrättningstillägg räknas inte med."});
-  return {rows, msgs, forr, whole, bygg, t3m, t2y, start, end, endsHome};
+  return {rows, msgs, forr, whole, bygg, utland, t3m, t2y, start, end, endsHome};
 }
 
 /* ---------- Rendering ---------- */
@@ -697,9 +778,17 @@ function render(){
   document.querySelectorAll(".skv-only").forEach(el => el.hidden = bygg);
   $("f-tillagg").hidden = !bygg || st.logi!=="egen";
   $("f-hemresa").hidden = st.helg!=="hemma";
+  $("f-eget").hidden = st.skvBelopp!=="eget";
+  const utl = !bygg && st.resmal==="utland";
+  $("f-utland").hidden = !utl;
+  $("step-belopp").hidden = bygg || utl;
+  ["sverige","utland"].forEach(k => $("rm-"+k).setAttribute("aria-pressed", String(st.resmal===k)));
+  if(utl){
+    const y = new Date().getFullYear(), uy = utlYear(y), N = normFor(st.land, uy);
+    $("land-info").textContent = `Normalbelopp ${uy}: ${kr(N)} heldag, ${kr(N/2)} halvdag och ${kr(N/2)} nattraktamente.`;
+  }
   // Numrera synliga steg i ordning
   [...document.querySelectorAll("#form > .step")].filter(s => !s.hidden).forEach((s,i) => { s.querySelector(".step-no").textContent = i+1; });
-  $("f-eget").hidden = st.skvBelopp!=="eget";
   $("f-frukostIngar").hidden = !(st.mF) || (bygg && st.friKost);
   $("logi-ag-desc").textContent = bygg ? "Traktamentet minskas med 35 %. Inget nattraktamente, inget förrättningstillägg." : "Inget nattraktamente.";
   ["mF","mL","mM"].forEach(id => { $(id).disabled = bygg && st.friKost; if(bygg && st.friKost) $(id).checked = true; else $(id).checked = !!st[id]; });
@@ -777,7 +866,7 @@ function renderBreakdown(res, sum){
 function renderDays(res){
   const bygg = res.bygg, rows = res.rows;
   $("dayCount").textContent = rows.length ? `· ${rows.length} dagar` : "";
-  let html = `<thead><tr><th>Datum</th><th>Dagtyp</th><th>Måltider</th>${bygg?'<th>Arbete</th>':''}<th>Skattefri grund</th><th class="r">Utbetalt</th><th class="r">Skattefritt</th><th class="r">Skatteplikt.</th>${bygg?'<th class="r">Tillägg</th>':''}</tr></thead><tbody>`;
+  let html = `<thead><tr><th>Datum</th><th>Dagtyp</th>${res.utland?"<th>Land</th>":""}<th>Måltider</th>${bygg?'<th>Arbete</th>':''}<th>Skattefri grund</th><th class="r">Utbetalt</th><th class="r">Skattefritt</th><th class="r">Skatteplikt.</th>${bygg?'<th class="r">Tillägg</th>':''}</tr></thead><tbody>`;
   let prevMonth = -1;
   for(const r of rows){
     const d = new Date(r.t), w = d.getUTCDay(), mo = d.getUTCMonth();
@@ -792,14 +881,15 @@ function renderDays(res){
     if(r.night) chips.push(`<span class="chip">+ natt</span>`);
     if(r.per===2 && r.kind!=="ingen") chips.push(`<span class="chip p2">70 %</span>`);
     if(r.per===3 && r.kind!=="ingen") chips.push(`<span class="chip p3">50 %</span>`);
-    if(r.red) chips.push(`<span class="chip">−${r.red} mat</span>`);
+    if(r.red) chips.push(`<span class="chip">−${kr(r.red)} mat</span>`);
     if(r.travelHome) chips.push(`<span class="chip">Hemresa</span>`);
     if(r.travelBack) chips.push(`<span class="chip">Återresa</span>`);
     if(r.capped) chips.push(`<span class="chip p3">3:e lediga dagen</span>`);
     if(r.rightEnded) chips.push(`<span class="chip p3">Efter 2 år</span>`);
     if(!chips.length) chips.push(`<span class="c-mute">–</span>`);
     const workCell = bygg ? `<td>${r.typ==="arbete"||r.typ==="avresa"||r.typ==="hemresa" ? `<input type="checkbox" data-d="${r.s}" data-k="arbete"${r.worked?" checked":""} aria-label="Arbete ${r.s}" style="accent-color:var(--accent)">` : '<span class="c-mute">–</span>'}</td>` : "";
-    html += `<tr class="${cls}"><td class="num">${fmtDay(r.t)}</td><td>${typeCell}</td><td><span class="meal">${r.typ==="ledigHemma"?'<span class="c-mute">–</span>':meal("f","Frukost",r.mf)+meal("l","Lunch",r.ml)+meal("m","Middag",r.mm)}</span></td>${workCell}<td>${chips.join("")}${r.why?`<div class="why">${r.why}</div>`:""}</td><td class="money">${kr(r.paid)}</td><td class="money c-free">${kr(r.taxFree)}</td><td class="money ${r.taxable?"c-tax":"c-mute"}">${kr(r.taxable)}</td>${bygg?`<td class="money ${r.till?"c-tax":"c-mute"}">${r.till?kr(r.till)+` <span class="c-mute" style="font-size:11px">${r.tillPct}%</span>`:"–"}</td>`:""}</tr>`;
+    const landCell = res.utland ? `<td><input class="landin" list="landlista" data-d="${r.s}" data-k="land" value="${esc(r.land)}" aria-label="Land ${r.s}"></td>` : "";
+    html += `<tr class="${cls}"><td class="num">${fmtDay(r.t)}</td><td>${typeCell}</td>${landCell}<td><span class="meal">${r.typ==="ledigHemma"?'<span class="c-mute">–</span>':meal("f","Frukost",r.mf)+meal("l","Lunch",r.ml)+meal("m","Middag",r.mm)}</span></td>${workCell}<td>${chips.join("")}${r.why?`<div class="why">${r.why}</div>`:""}</td><td class="money">${kr(r.paid)}</td><td class="money c-free">${kr(r.taxFree)}</td><td class="money ${r.taxable?"c-tax":"c-mute"}">${kr(r.taxable)}</td>${bygg?`<td class="money ${r.till?"c-tax":"c-mute"}">${r.till?kr(r.till)+` <span class="c-mute" style="font-size:11px">${r.tillPct}%</span>`:"–"}</td>`:""}</tr>`;
   }
   html += `</tbody>`;
   $("days").innerHTML = rows.length ? html : `<tbody><tr><td class="c-mute">Inga dagar att visa.</td></tr></tbody>`;
@@ -830,18 +920,26 @@ function renderRules(){
     <li>Hemresedagen: Byggavtalet betalar hela beloppet inkl. logi, men utan övernattning är nattraktamentet inte skattefritt. Den delen blir lön.</li>
     <li>Halvdag efter tre månader räknas som hälften av det reducerade heldagsbeloppet.</li>
     <li>Belopp väljs efter kalenderår dag för dag.</li></ul></div>`;
-  $("rules").innerHTML = (bygg ? byggHtml : "") + skvHtml + mealHtml + assump;
+  const uy = UTL_YEARS[UTL_YEARS.length-1];
+  const utlHtml = `<div><h3>Utlandsresor ${uy}</h3><ul>
+    <li>Heldag: landets normalbelopp, t.ex. Tyskland <span class="num">${UTLAND[uy]["Tyskland"]} kr</span>, Norge <span class="num">${UTLAND[uy]["Norge"]} kr</span>, USA <span class="num">${UTLAND[uy]["USA"]} kr</span>. Halvdag och nattraktamente: halva normalbeloppet.</li>
+    <li>Landet där du varit längst tid 06–24 gäller. Restid med flyg och båt räknas inte.</li>
+    <li>Avrese- och hemresedag som mest tillbringas i Sverige: svenska belopp.</li>
+    <li>Fri kost: frukost −15 %, lunch eller middag −35 %, båda −70 %, alla tre −85 %.</li>
+    <li>Land som saknas: beloppet för "Övriga länder och områden" (<span class="num">${UTLAND[uy][OVRIGA]} kr</span>).</li></ul></div>`;
+  $("rules").innerHTML = (bygg ? byggHtml : "") + skvHtml + (!bygg && st.resmal==="utland" ? utlHtml : "") + mealHtml + assump;
 }
 
 /* ---------- Koppla formulär ---------- */
 const bindIds = ["avresa","avresaTid","hemkomst","hemTid","forrStart","periodFran","periodTill","slutTid","egetHel","egetHalv","egetNatt"];
-const checkIds = ["slutarHemresa","tillaggRatt","fredagFore19","mandagFore12","friKost","mF","mL","mM","frukostIngar","forlangd"];
+const checkIds = ["avresaSverige","hemresaSverige","slutarHemresa","tillaggRatt","fredagFore19","mandagFore12","friKost","mF","mL","mM","frukostIngar","forlangd"];
 function fill(){
   bindIds.forEach(id => $(id).value = st[id] ?? "");
   checkIds.forEach(id => $(id).checked = !!st[id]);
   $("logi-"+st.logi).checked = true;
   $("helg-"+st.helg).checked = true;
   $("sb-"+st.skvBelopp).checked = true;
+  $("land").value = isLand(st.land) ? st.land : "Tyskland";
 }
 const CAL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
 // Datum ÅÅÅÅ-MM-DD och tid TT:MM (24 h) oberoende av webbläsarens språk
@@ -912,11 +1010,22 @@ $("resetAll").addEventListener("click", () => {
   fill(); render();
   const b = $("resetAll"); b.textContent = "Återställt"; setTimeout(() => { b.textContent = "Återställ"; }, 1500);
 });
+document.querySelectorAll("[data-resmal]").forEach(b => b.addEventListener("click", () => { st.resmal = b.dataset.resmal; render(); }));
+$("land").innerHTML = LANDER.map(c => `<option value="${c}">${c}</option>`).join("");
+$("landlista").innerHTML = ["Sverige", ...LANDER].map(c => `<option value="${c}"></option>`).join("");
+$("land").addEventListener("change", e => { st.land = e.target.value; render(); });
 document.querySelectorAll("[data-omfang]").forEach(b => b.addEventListener("click", () => { st.omfang = b.dataset.omfang; render(); }));
 $("form").addEventListener("submit", e => e.preventDefault());
 
 $("days").addEventListener("change", e => {
   const el = e.target, d = el.dataset.d, k = el.dataset.k; if(!d || !k) return;
+  if(k==="land"){
+    const v = el.value.trim();
+    if(v && !isLand(v)){ el.setAttribute("aria-invalid","true"); return; }
+    const o = st.over[d] || (st.over[d] = {});
+    if(v) o.land = v; else { delete o.land; if(!Object.keys(o).length) delete st.over[d]; }
+    render(); return;
+  }
   const o = st.over[d] || (st.over[d] = {});
   o[k] = el.type==="checkbox" ? el.checked : el.value;
   render();
@@ -936,6 +1045,13 @@ function inputSummary(){
     out.push(["Period", `${st.periodFran} – ${st.periodTill}`]);
     out.push(["Avslutas med hemresa", st.slutarHemresa ? `Ja, kl. ${st.slutTid}` : "Nej"]);
   }
+  if(!bygg){
+    if(st.resmal==="utland"){
+      out.push(["Resmål", `Utlandet – ${st.land}`]);
+      if(st.avresaSverige) out.push(["Avresedagen", "Mest tid i Sverige"]);
+      if(st.hemresaSverige) out.push(["Hemresedagen", "Mest tid i Sverige"]);
+    } else out.push(["Resmål", "Inom Sverige"]);
+  }
   out.push(["Boende", st.logi==="egen" ? "Ordnar logi själv" : "Arbetsgivaren står för logi"]);
   if(bygg && st.logi==="egen") out.push(["Förrättningstillägg", st.tillaggRatt ? "Ja" : "Nej"]);
   if(bygg) out.push(["Helger", st.helg==="hemma" ? "Hemmahelg" : "Stannar på orten"]);
@@ -946,7 +1062,7 @@ function inputSummary(){
   const meals = bygg && st.friKost ? "Fri kost enligt överenskommelse (−55 %)" : ([st.mF&&"frukost", st.mL&&"lunch", st.mM&&"middag"].filter(Boolean).join(", ") || "Inga");
   out.push(["Fria måltider", meals]);
   if(st.mF && !(bygg && st.friKost)) out.push(["Frukost ingår i hotellpriset", st.frukostIngar ? "Ja" : "Nej"]);
-  if(!bygg) out.push(["Arbetsgivarens belopp", st.skvBelopp==="norm" ? "Skatteverkets normalbelopp" : `Egna: heldag ${st.egetHel} kr, halvdag ${st.egetHalv} kr, natt ${st.egetNatt} kr`]);
+  if(!bygg && st.resmal!=="utland") out.push(["Arbetsgivarens belopp", st.skvBelopp==="norm" ? "Skatteverkets normalbelopp" : `Egna: heldag ${st.egetHel} kr, halvdag ${st.egetHalv} kr, natt ${st.egetNatt} kr`]);
   if(bygg) out.push(["Förlängd rätt efter två år", st.forlangd ? "Ja" : "Nej"]);
   const n = Object.keys(st.over).length;
   if(n) out.push(["Manuellt ändrade dagar", String(n)]);
@@ -959,13 +1075,21 @@ function totals(){
 const sumLines = lines => lines.reduce((a,l)=>({paid:a.paid+l.paid, free:a.free+l.free, tax:a.tax+l.tax}),{paid:0,free:0,tax:0});
 const kindLabel = k => k==="hel" ? "Heldag" : k==="halv" ? "Halvdag" : "–";
 const nowStamp = () => { const n = new Date(); const p = x => String(x).padStart(2,"0"); return `${n.getFullYear()}-${p(n.getMonth()+1)}-${p(n.getDate())} ${p(n.getHours())}:${p(n.getMinutes())}`; };
+// Uppgifter till reseräkningen: läses direkt från fälten och sparas aldrig
+const who = () => ({namn:$("whoNamn").value.trim(), foretag:$("whoForetag").value.trim(), arende:$("whoArende").value.trim(), ort:$("whoOrt").value.trim()});
+const whoRows = () => { const w = who(); return [["Namn", w.namn], ["Företag", w.foretag], ["Ärende / syfte", w.arende], ["Resmål / ort", w.ort]].filter(([,v]) => v); };
 function fileBase(){
-  const r = last.res.rows; return `traktamente_${st.regel==="bygg"?"byggavtalet":"skatteverket"}_${r[0].s}_${r[r.length-1].s}`;
+  const r = last.res.rows, w = who();
+  const namn = w.namn ? "_" + w.namn.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"") : "";
+  return `reserakning_${r[0].s}_${r[r.length-1].s}${namn}`;
 }
 
 function buildPrint(){
   const {res} = last, t = totals(), bygg = res.bygg, lines = breakdownLines(res), tot = sumLines(lines);
   let h = `<div class="pr-head"><img src="logo-light.png" alt="Traktamenteskollen" style="height:40px;width:auto"><div>Beräknad ${nowStamp()}<br>traktamenteskollen.se</div></div>`;
+  const wr = whoRows();
+  h += `<h1 class="pr-title">Reseräkning – underlag för traktamente</h1>`;
+  h += `<div class="pr-who">${(wr.length ? wr : [["Namn",""],["Företag",""]]).map(([k,v])=>`<div><span>${k}</span><span>${esc(v)}</span></div>`).join("")}</div>`;
   h += `<h2>Förutsättningar</h2><div class="pr-grid">${inputSummary().map(([k,v])=>`<div><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join("")}</div>`;
   h += `<h2>Summering</h2><div class="pr-totals">
     <div><small>Utbetalt totalt</small><b>${kr(t.cash)}</b></div>
@@ -975,14 +1099,15 @@ function buildPrint(){
   h += `<h2>Uppdelning</h2><table><thead><tr><th>Post</th><th class="r">Dagar</th><th class="r">Utbetalt</th><th class="r">Skattefritt</th><th class="r">Skattepliktigt</th></tr></thead><tbody>`
     + lines.map(l=>`<tr><td>${l.label}</td><td class="r">${l.n}</td><td class="money">${kr(l.paid)}</td><td class="money">${kr(l.free)}</td><td class="money">${kr(l.tax)}</td></tr>`).join("")
     + `</tbody><tfoot><tr><td>Summa kontant</td><td></td><td class="money">${kr(tot.paid)}</td><td class="money">${kr(tot.free)}</td><td class="money">${kr(tot.tax)}</td></tr></tfoot></table>`;
-  h += `<h2>Dag för dag</h2><table><thead><tr><th>Datum</th><th>Dagtyp</th><th>Grund</th><th>Mat</th>${bygg?"<th>Arb.</th>":""}<th class="r">Utbetalt</th><th class="r">Skattefritt</th><th class="r">Skattepl.</th>${bygg?'<th class="r">Tillägg</th>':""}</tr></thead><tbody>`
+  h += `<h2>Dag för dag</h2><table><thead><tr><th>Datum</th><th>Dagtyp</th>${res.utland?"<th>Land</th>":""}<th>Grund</th><th>Mat</th>${bygg?"<th>Arb.</th>":""}<th class="r">Utbetalt</th><th class="r">Skattefritt</th><th class="r">Skattepl.</th>${bygg?'<th class="r">Tillägg</th>':""}</tr></thead><tbody>`
     + res.rows.map(r=>{
         const grund = [kindLabel(r.kind), r.night?"+ natt":"", r.per===2?"70 %":r.per===3?"50 %":""].filter(Boolean).join(" ");
         const mat = [r.mf&&"F", r.ml&&"L", r.mm&&"M"].filter(Boolean).join(" ") || "–";
-        return `<tr><td>${fmtDay(r.t)}</td><td>${typeLabel(r.typ)}</td><td>${grund}</td><td>${mat}</td>${bygg?`<td>${r.worked?"Ja":"–"}</td>`:""}<td class="money">${kr(r.paid)}</td><td class="money">${kr(r.taxFree)}</td><td class="money">${kr(r.taxable)}</td>${bygg?`<td class="money">${r.till?kr(r.till):"–"}</td>`:""}</tr>`
-          + (r.why ? `<tr class="pr-why"><td></td><td class="wrap" colspan="${bygg?8:6}">${esc(r.why)}</td></tr>` : "");
+        return `<tr><td>${fmtDay(r.t)}</td><td>${typeLabel(r.typ)}</td>${res.utland?`<td>${esc(r.land)}</td>`:""}<td>${grund}</td><td>${mat}</td>${bygg?`<td>${r.worked?"Ja":"–"}</td>`:""}<td class="money">${kr(r.paid)}</td><td class="money">${kr(r.taxFree)}</td><td class="money">${kr(r.taxable)}</td>${bygg?`<td class="money">${r.till?kr(r.till):"–"}</td>`:""}</tr>`
+          + (r.why ? `<tr class="pr-why"><td></td><td class="wrap" colspan="${(bygg?8:6)+(res.utland?1:0)}">${esc(r.why)}</td></tr>` : "");
       }).join("") + `</tbody></table>`;
   h += `<p class="pr-note">Belopp enligt Skatteverket (belopp och procent ${YEARS[YEARS.length-1]})${bygg?" och Byggavtalet 2025–2027 §6":""}. Kontrollverktyg som inte ersätter lönesystemets beräkning.</p>`;
+  h += `<div class="pr-sign"><div>Underskrift anställd, datum</div><div>Attesterad av arbetsgivare, datum</div></div>`;
   $("printReport").innerHTML = h;
 }
 $("exportPdf").addEventListener("click", () => {
@@ -1015,7 +1140,7 @@ function buildWorkbook(XLSX){
   const fmtCols = (ws, cols, from, to, z) => { for(let R=from; R<=to; R++) for(const C of cols){ const c = ws[XLSX.utils.encode_cell({r:R,c:C})]; if(c && typeof c.v==="number") c.z = z; } };
 
   // Blad 1: Sammanfattning
-  const a = [["Traktamenteskollen"], [`Beräknad ${nowStamp()}`], [], ["Förutsättningar"], ...inputSummary(), []];
+  const a = [["Reseräkning – underlag för traktamente"], [`Beräknad ${nowStamp()} med Traktamenteskollen`], [], ...(whoRows().length ? [...whoRows(), []] : []), ["Förutsättningar"], ...inputSummary(), []];
   const sumStart = a.length;
   a.push(["Summering", "Belopp (kr)"], ["Utbetalt totalt", r2(t.cash)], ["Skattefritt", r2(t.free)], ["Skattepliktigt", r2(t.tax)]);
   if(t.till) a.push(["  varav förrättningstillägg", r2(t.till)]);
@@ -1032,10 +1157,10 @@ function buildWorkbook(XLSX){
   ws1["!cols"] = [{wch:44},{wch:40},{wch:14},{wch:14},{wch:14}];
 
   // Blad 2: Dag för dag
-  const head = ["Datum","Veckodag","Dagtyp","Skattefri grund","Nattraktamente","Nivå","Frukost","Lunch","Middag","Måltidsavdrag (kr)",
+  const head = ["Datum","Veckodag","Dagtyp", ...(res.utland?["Land","Normalbelopp (kr)"]:[]), "Skattefri grund","Nattraktamente","Nivå","Frukost","Lunch","Middag","Måltidsavdrag (kr)",
     ...(bygg?["Arbete"]:[]), "Utbetalt (kr)","Skattefritt (kr)","Skattepliktigt (kr)", ...(bygg?["Förrättningstillägg (kr)","Tillägg %"]:[]), "Kostförmån (kr)","Förklaring"];
   const d = [head, ...res.rows.map(r => [
-    r.s, WD[new Date(r.t).getUTCDay()], typeLabel(r.typ), kindLabel(r.kind), r.night?"Ja":"Nej",
+    r.s, WD[new Date(r.t).getUTCDay()], typeLabel(r.typ), ...(res.utland?[r.land, r.utr ? r.N : null]:[]), kindLabel(r.kind), r.night?"Ja":"Nej",
     r.kind==="ingen" ? "–" : (r.per===1?"100 %":r.per===2?"70 %":"50 %"),
     r.mf?"Ja":null, r.ml?"Ja":null, r.mm?"Ja":null, r.red,
     ...(bygg?[r.worked?"Ja":null]:[]),
@@ -1047,7 +1172,7 @@ function buildWorkbook(XLSX){
   const sumRow = head.map(() => null); sumRow[0] = "Summa"; d.push(sumRow);
   const ws2 = XLSX.utils.aoa_to_sheet(d);
   const col = name => head.indexOf(name);
-  const moneyCols = ["Måltidsavdrag (kr)","Utbetalt (kr)","Skattefritt (kr)","Skattepliktigt (kr)","Förrättningstillägg (kr)","Kostförmån (kr)"].map(col).filter(c => c>=0);
+  const moneyCols = ["Normalbelopp (kr)","Måltidsavdrag (kr)","Utbetalt (kr)","Skattefritt (kr)","Skattepliktigt (kr)","Förrättningstillägg (kr)","Kostförmån (kr)"].map(col).filter(c => c>=0);
   fmtCols(ws2, moneyCols, 1, n-1, KR);
   moneyCols.forEach(c => {
     const L = XLSX.utils.encode_col(c), v = r2(d.slice(1, n).reduce((a,row) => a + (Number(row[c])||0), 0));
