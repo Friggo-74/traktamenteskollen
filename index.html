@@ -464,7 +464,7 @@ input.landin[aria-invalid="true"]{border-color:var(--err)}
         <summary>Dag för dag <span class="hint" id="dayCount" style="font-family:var(--f-body);font-weight:400"></span></summary>
         <div style="display:grid;gap:10px;margin-top:12px">
           <div class="row" style="justify-content:space-between;align-items:center">
-            <p class="hint">Ändra dagtyp för helgdagar, semester eller helger du stannar. F L M = fria måltider. <span class="bygg-only">"Arbete" styr förrättningstillägget.</span></p>
+            <p class="hint">Ändra dagtyp för helgdagar, semester eller helger du stannar. F L M = fria måltider. <span class="bygg-only">"Arbete" styr förrättningstillägget. På avrese- och hemresedagen måste du själv markera om arbete utförts; enbart resa ger inget tillägg.</span></p>
             <button type="button" class="btn" id="resetDays">Återställ dagar</button>
           </div>
           <div class="tscroll" style="max-height:640px;overflow-y:auto"><table class="days" id="days"></table></div>
@@ -718,7 +718,7 @@ function compute(){
       const mult = 1 - (st.logi==="ag" ? .35 : 0) - (st.friKost ? .55 : 0);
       paid = rightEnded ? 0 : r2(base*mult);
       taxFree = Math.min(paid, tfDag + tfNatt);
-      const defWorked = typ==="arbete" || typ==="hemresa" || (typ==="avresa" && depMin <= 720);
+      const defWorked = typ==="arbete";
       worked = isLedig(typ) ? false : (o.arbete ?? defWorked);
       if(st.logi==="egen" && st.tillaggRatt && worked && !rightEnded){
         const dayNum = (t - tForr)/DAY + 1;
@@ -760,6 +760,7 @@ function compute(){
   if(bygg && rows.some(r=>r.rightEnded)) msgs.push({t:"warn", m:"Perioden passerar två år på samma förrättningsort. Traktamente och förrättningstillägg upphör om ingen förlängning är avtalad."});
   if(rows.some(r=>r.capped)) msgs.push({t:"info", m:"Lediga dagar utöver två i följd ger inget traktamente enligt Byggavtalet §6 2.8."});
   if(rows.some(r=>r.per===2) && !rows.some(r=>r.per===1)) msgs.push({t:"info", m:"Hela perioden ligger efter tre månader: skattefritt dagtraktamente är 70 %."});
+  if(bygg && st.logi==="egen" && st.tillaggRatt && rows.some(r => (r.typ==="avresa" || r.typ==="hemresa") && st.over[r.s]?.arbete === undefined)) msgs.push({t:"info", m:"Har du arbetat på avrese- eller hemresedagen? Markera Arbete i Dag för dag för att räkna med förrättningstillägg. Enbart resa ger inget tillägg (§6 punkt 2.5)."});
   if(bygg && st.logi==="egen" && !st.tillaggRatt) msgs.push({t:"info", m:"Förrättningstillägg räknas inte med."});
   return {rows, msgs, forr, whole, bygg, utland, t3m, t2y, start, end, endsHome};
 }
