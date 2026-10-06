@@ -11,3 +11,19 @@ Kontrollverktyg för traktamente enligt **Byggavtalet** eller **Skatteverket**. 
 En enda statisk fil, `index.html`, utan byggsteg. Deployas direkt på Vercel.
 
 Beloppen uppdateras i `RATES` i `index.html` när nya belopp fastställs.
+
+## Cloudflare Pages
+
+Koppla GitHub-repot med följande inställningar:
+
+- Produktionsgren: `main`
+- Framework preset: None
+- Build command: `node scripts/build-pages.mjs`
+- Build output directory: `dist`
+
+Byggsteget kopierar endast offentliga webbplatsfiler. Domän och SSL
+konfigureras i Cloudflare. `_redirects` skickar www till huvuddomänen.
+`vercel.json` behålls för vidarebefordran från den gamla Vercel-adressen.
+
+Före namnserverbytet: kopiera alla befintliga DNS-poster, inklusive
+Googles verifierings-TXT och eventuella e-postposter, till Cloudflare.
